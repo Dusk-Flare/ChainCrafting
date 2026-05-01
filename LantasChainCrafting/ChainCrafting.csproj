@@ -4,7 +4,9 @@
   <PropertyGroup>
     <TargetFramework>net472</TargetFramework>
     <AssemblyName>LantasChainCrafting</AssemblyName>
-    <Version>1.0.0</Version>
+	  <BepInExPluginGuid>com.lanta.ChainCrafting</BepInExPluginGuid>
+	  <BepInExPluginName>Chain Crafting</BepInExPluginName>
+	  <Version>1.0.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>11</LangVersion>
     <RootNamespace>ChainCrafting</RootNamespace>
