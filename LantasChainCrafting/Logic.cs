@@ -3,6 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Text;
+using UnityEngine;
 
 namespace ChainCrafting
 {
@@ -16,7 +19,6 @@ namespace ChainCrafting
         public static IEnumerator Craft(Crafter crafter, TechType techType)
         {
             ChainCraft(techType, Inventory.main, out Stack<Resource> craftStack);
-
             while (craftStack.Any())
             {
                 Resource item = craftStack.Pop();
@@ -30,6 +32,106 @@ namespace ChainCrafting
                     while (crafter.HasCraftedItem()) yield return null;
                 }
             }
+        }
+
+        public static void ConditionalCrftingStatus(IList<Ingredient> ingredients, List<TooltipIcon> icons, bool displayMissing)
+        {
+            if (!displayMissing)
+            { 
+                GetCraftingStatus(ingredients, icons); 
+                return; 
+            }
+            Stack<Resource> stack = new();
+            foreach (Ingredient ingredient in ingredients)
+            {
+                TechType techType = ingredient.techType;
+                AddToStack(techType, ingredient.amount, ref stack);
+            }
+            RemoveOwned(ref stack, Inventory.main);
+            CostOfCraft(stack, out Dictionary<TechType, int> fullCost);
+            IngredientList(fullCost, out IList<Ingredient> ingredientsList);
+            IconsFromList(ingredientsList, out List<TooltipIcon> newIcons);
+            GetCraftingStatus(ingredientsList, newIcons);
+        }
+
+        public static void GetCraftingStatus(IList<Ingredient> ingredients, List<TooltipIcon> icons)
+        {
+            if (ingredients == null)
+            {
+                return;
+            }
+            int count = ingredients.Count;
+            Inventory main = Inventory.main;
+            StringBuilder stringBuilder = new();
+            for (int i = 0; i < count; i++)
+            {
+                stringBuilder.Length = 0;
+                Ingredient ingredient = ingredients[i];
+                TechType techType = ingredient.techType;
+                int pickupCount = main.GetPickupCount(techType);
+                int amount = ingredient.amount;
+                bool flag = pickupCount >= amount || !GameModeUtils.RequiresIngredients();
+                bool hasIngredients = false;
+                if(CraftTree.IsCraftable(techType))
+                { 
+                    CraftingLogic.IsFuffiled(techType, out bool isCraftable); 
+                    hasIngredients = isCraftable;
+                }
+                Sprite sprite = SpriteManager.Get(techType);
+                if (flag)
+                {
+                    stringBuilder.Append(Plugin.available);
+                }
+                else if (hasIngredients)
+                {
+                    stringBuilder.Append(Plugin.craftable);
+                }
+                else
+                {
+                    stringBuilder.Append(Plugin.unavailable);
+                }
+                string orFallback = Language.main.GetOrFallback(TooltipFactory.techTypeIngredientStrings.Get(techType), techType);
+                stringBuilder.Append(orFallback);
+                if (amount > 1)
+                {
+                    stringBuilder.Append(" x");
+                    stringBuilder.Append(amount);
+                }
+                if (pickupCount > 0 && pickupCount < amount)
+                {
+                    stringBuilder.Append(" (");
+                    stringBuilder.Append(pickupCount);
+                    stringBuilder.Append(")");
+                }
+                stringBuilder.Append("</color>");
+                icons.Add(new TooltipIcon(sprite, stringBuilder.ToString()));
+            }
+        }
+
+        public static void IngredientList(Dictionary<TechType, int> ingredients, out IList<Ingredient> ingredientsList)
+        {
+            ingredientsList = new List<Ingredient>();
+            foreach (TechType material in ingredients.Keys)
+            {
+                ingredientsList.Add(new Ingredient(material, ingredients[material]));
+            }
+        }
+
+        public static void IconsFromList(IList<Ingredient> ingredients, out List<TooltipIcon> icons)
+        {
+            icons = new List<TooltipIcon>();
+            foreach (Ingredient ingredient in ingredients)
+            {
+                TechType techType = ingredient.techType;
+                Sprite sprite = SpriteManager.Get(techType);
+                icons.Add(new TooltipIcon(sprite, techType.AsString()));
+            }
+        }
+
+        public static void AddToStack(TechType techType, int ammount, ref Stack<Resource> resourceStack)
+        {
+            CreateStack(techType, ref resourceStack, ammount);
+            OrganizeCraftStack(ref resourceStack);
         }
 
         public static void IsFuffiled(TechType techType, out bool alreadyPassed)

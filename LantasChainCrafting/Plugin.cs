@@ -1,7 +1,10 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
+using System.Collections.Generic;
 using System.Reflection;
+using System.Text;
+using UnityEngine;
 
 namespace ChainCrafting
 {
@@ -11,6 +14,10 @@ namespace ChainCrafting
         public new static ManualLogSource Logger { get; private set; }
 
         private static Assembly Assembly { get; } = Assembly.GetExecutingAssembly();
+
+        public static string available = "<color=#94DE00FF>";
+        public static string craftable = "<color=#F5AF18FF>";
+        public static string unavailable = "<color=#DF4026FF>";
 
         private void Awake()
         {
@@ -51,6 +58,15 @@ namespace ChainCrafting
         {
             if (!GameModeUtils.RequiresIngredients()) return true;
             __instance.StartCoroutine(CraftingLogic.Craft(__instance, techType));
+            return false;
+        }
+
+        [HarmonyPatch(typeof(TooltipFactory))]
+        [HarmonyPatch(nameof(TooltipFactory.WriteIngredients))]
+        [HarmonyPrefix]
+        private static bool WriteIngredients(IList<Ingredient> ingredients, List<TooltipIcon> icons)
+        {
+            CraftingLogic.GetCraftingStatus(ingredients, icons);
             return false;
         }
     }
