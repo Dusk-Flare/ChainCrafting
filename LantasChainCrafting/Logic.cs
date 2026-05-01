@@ -34,7 +34,7 @@ namespace ChainCrafting
             }
         }
 
-        public static void ConditionalCrftingStatus(IList<Ingredient> ingredients, List<TooltipIcon> icons, bool displayMissing)
+        public static void ConditionalCraftingStatus(IList<Ingredient> ingredients, List<TooltipIcon> icons, bool displayMissing)
         {
             if (!displayMissing)
             { 
@@ -51,6 +51,12 @@ namespace ChainCrafting
             CostOfCraft(stack, out Dictionary<TechType, int> fullCost);
             IngredientList(fullCost, out IList<Ingredient> ingredientsList);
             IconsFromList(ingredientsList, out List<TooltipIcon> newIcons);
+            Plugin.Logger.LogInfo("Full cost of craft:");
+            foreach (Ingredient ingredient in ingredientsList)
+            {
+                Plugin.Logger.LogInfo($"TechType: {ingredient.techType}, Amount: {ingredient.amount}");
+            }
+            Plugin.Logger.LogInfo("Crafting status of full cost end.");
             GetCraftingStatus(ingredientsList, newIcons);
         }
 

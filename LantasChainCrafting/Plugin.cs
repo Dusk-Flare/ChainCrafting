@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
+using Nautilus.Handlers;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
@@ -26,6 +27,12 @@ namespace ChainCrafting
 
             Harmony.CreateAndPatchAll(Assembly, $"{PluginInfo.PLUGIN_GUID}");
             Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
+        }
+
+        private void Update()
+        {
+            if(!GameInput.IsInitialized) return;
+            if (GameInput.GetButtonDown(CraftingInputs.MissingCrafts)) CraftingInputs.toggleCrafts();
         }
 
 
@@ -66,7 +73,7 @@ namespace ChainCrafting
         [HarmonyPrefix]
         private static bool WriteIngredients(IList<Ingredient> ingredients, List<TooltipIcon> icons)
         {
-            CraftingLogic.GetCraftingStatus(ingredients, icons);
+            CraftingLogic.ConditionalCraftingStatus(ingredients, icons, CraftingInputs.MissingCraft);
             return false;
         }
     }
