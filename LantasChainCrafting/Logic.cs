@@ -34,7 +34,6 @@ namespace ChainCrafting
 
         public static void IsFuffiled(TechType techType, out bool alreadyPassed)
         {
-            Plugin.Logger.LogInfo($"Checking if crafting {techType} is fulfilled.");
             if (!GameModeUtils.RequiresIngredients()) 
             { 
                 alreadyPassed = true; 
@@ -171,13 +170,10 @@ namespace ChainCrafting
 
         private static void ValidateCraft(Inventory inventory, Dictionary<TechType, int> entryCost, out bool valid)
         {
-            Plugin.Logger.LogInfo("Validating craft requirements.");
             foreach (TechType material in entryCost.Keys)
             {
-                Plugin.Logger.LogInfo($"Checking material: {material}. Required: {entryCost[material]}, Owned: {inventory.GetPickupCount(material)}");
                 if (entryCost[material] > inventory.GetPickupCount(material))
                 {
-                    Plugin.Logger.LogInfo($"Player does not have enough {material} to craft the target item. Required: {entryCost[material]}, Owned: {inventory.GetPickupCount(material)}");
                     valid = false;
                     return;
                 }
