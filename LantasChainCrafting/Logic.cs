@@ -1,14 +1,8 @@
-﻿using BepInEx;
-using BepInEx.Logging;
-using HarmonyLib;
-using System;
-using System.CodeDom.Compiler;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Reflection;
-using static MainMenuLoadButton;
 
 namespace ChainCrafting
 {
@@ -19,7 +13,6 @@ namespace ChainCrafting
 
     public static class CraftingLogic
     {
-        public static CraftTree.Type craftingTree;
         public static IEnumerator Craft(Crafter crafter, TechType techType)
         {
             ChainCraft(techType, Inventory.main, out Stack<Resource> craftStack);
@@ -39,14 +32,18 @@ namespace ChainCrafting
             }
         }
 
-        public static void IsFuffiled(TechType techType, Inventory inventory, ref bool alreadyPassed)
+        public static void IsFuffiled(TechType techType, out bool alreadyPassed)
         {
             Plugin.Logger.LogInfo($"Checking if crafting {techType} is fulfilled.");
-            if (alreadyPassed) return;
+            if (!GameModeUtils.RequiresIngredients()) 
+            { 
+                alreadyPassed = true; 
+                return; 
+            }
+            Inventory inventory = Inventory.main;
             ChainCraft(techType, inventory, out Stack<Resource> craftStack);
             CostOfCraft(craftStack, out Dictionary<TechType, int> entryCost);
-            ValidateCraft(inventory, entryCost, out bool result);
-            alreadyPassed = result;
+            ValidateCraft(inventory, entryCost, out alreadyPassed);
         }
 
 
@@ -69,7 +66,7 @@ namespace ChainCrafting
         public static void CreateStack(TechType recipe, ref Stack<Resource> stack, int amount)
         {
             if (recipe == TechType.None) return;
-            if (!CraftTree.IsCraftable(recipe) || IsInCraftingTree(recipe)) return;
+            if (!CraftTree.IsCraftable(recipe)) return;
             stack.Push(new Resource(recipe, amount));
             ReadOnlyCollection<Ingredient> component = TechData.GetIngredients(recipe);
             foreach (Ingredient ingredient in component) CreateStack(ingredient.techType, ref stack, ingredient.amount * amount);
@@ -158,16 +155,18 @@ namespace ChainCrafting
             return false;
         }
 
-        public static bool IsInCraftingTree(TechType techType)
+        public static bool IsInCraftingTree(TechType techType, CraftTree.Type craftingTree)
         {
             if (craftingTree is CraftTree.Type.None) return false;
             CraftTree tree = CraftTree.GetTree(craftingTree);
-            if (tree?.nodes == null) return false;
-            foreach (CraftNode node in tree.nodes)
+            CraftNode node = tree.nodes;
+            HashSet<TechType> recipies = new();
+            IEnumerator<CraftNode> enumerator = node.Traverse();
+            while (enumerator.MoveNext())
             {
-                if (node.techType0 == techType && CraftTree.IsCraftable(techType)) return true;
+                recipies.Add(enumerator.Current.techType0);
             }
-            return false;
+            return recipies.Contains(techType);
         }
 
         private static void ValidateCraft(Inventory inventory, Dictionary<TechType, int> entryCost, out bool valid)
