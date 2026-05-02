@@ -3,15 +3,22 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
-using UnityEngine;
 
 namespace ChainCrafting
 {
     public record Resource(TechType Type, int Amount)
     {
+        public Resource(TechType type) : this(type, 1) { }
+        public Resource(KeyValuePair<TechType, int> pair) : this(pair.Key, pair.Value) { }
+        public Resource(Ingredient ingredient) : this(ingredient.techType, ingredient.amount) { }
+
+
+        public bool Craftable => CraftTree.IsCraftable(Type);
+        public int PickupCount => Inventory.main.GetPickupCount(Type);
         public int Yield => TechData.GetCraftAmount(Type);
+
+        public static implicit operator Resource(KeyValuePair<TechType, int> pair) => new(pair);
+        public static implicit operator Resource(Ingredient ingredient) => new(ingredient);
     }
 
     public static class CraftingLogic
@@ -34,112 +41,6 @@ namespace ChainCrafting
             }
         }
 
-        public static void ConditionalCraftingStatus(IList<Ingredient> ingredients, List<TooltipIcon> icons, bool displayMissing)
-        {
-            if (!displayMissing)
-            { 
-                GetCraftingStatus(ingredients, icons); 
-                return; 
-            }
-            Stack<Resource> stack = new();
-            foreach (Ingredient ingredient in ingredients)
-            {
-                TechType techType = ingredient.techType;
-                AddToStack(techType, ingredient.amount, ref stack);
-            }
-            RemoveOwned(ref stack, Inventory.main);
-            CostOfCraft(stack, out Dictionary<TechType, int> fullCost);
-            IngredientList(fullCost, out IList<Ingredient> ingredientsList);
-            IconsFromList(ingredientsList, out List<TooltipIcon> newIcons);
-            Plugin.Logger.LogInfo("Full cost of craft:");
-            foreach (Ingredient ingredient in ingredientsList)
-            {
-                Plugin.Logger.LogInfo($"TechType: {ingredient.techType}, Amount: {ingredient.amount}");
-            }
-            Plugin.Logger.LogInfo("Crafting status of full cost end.");
-            GetCraftingStatus(ingredientsList, newIcons);
-        }
-
-        public static void GetCraftingStatus(IList<Ingredient> ingredients, List<TooltipIcon> icons)
-        {
-            if (ingredients == null)
-            {
-                return;
-            }
-            int count = ingredients.Count;
-            Inventory main = Inventory.main;
-            StringBuilder stringBuilder = new();
-            for (int i = 0; i < count; i++)
-            {
-                stringBuilder.Length = 0;
-                Ingredient ingredient = ingredients[i];
-                TechType techType = ingredient.techType;
-                int pickupCount = main.GetPickupCount(techType);
-                int amount = ingredient.amount;
-                bool flag = pickupCount >= amount || !GameModeUtils.RequiresIngredients();
-                bool hasIngredients = false;
-                if(CraftTree.IsCraftable(techType))
-                { 
-                    CraftingLogic.IsFuffiled(techType, out bool isCraftable); 
-                    hasIngredients = isCraftable;
-                }
-                Sprite sprite = SpriteManager.Get(techType);
-                if (flag)
-                {
-                    stringBuilder.Append(Plugin.available);
-                }
-                else if (hasIngredients)
-                {
-                    stringBuilder.Append(Plugin.craftable);
-                }
-                else
-                {
-                    stringBuilder.Append(Plugin.unavailable);
-                }
-                string orFallback = Language.main.GetOrFallback(TooltipFactory.techTypeIngredientStrings.Get(techType), techType);
-                stringBuilder.Append(orFallback);
-                if (amount > 1)
-                {
-                    stringBuilder.Append(" x");
-                    stringBuilder.Append(amount);
-                }
-                if (pickupCount > 0 && pickupCount < amount)
-                {
-                    stringBuilder.Append(" (");
-                    stringBuilder.Append(pickupCount);
-                    stringBuilder.Append(")");
-                }
-                stringBuilder.Append("</color>");
-                icons.Add(new TooltipIcon(sprite, stringBuilder.ToString()));
-            }
-        }
-
-        public static void IngredientList(Dictionary<TechType, int> ingredients, out IList<Ingredient> ingredientsList)
-        {
-            ingredientsList = new List<Ingredient>();
-            foreach (TechType material in ingredients.Keys)
-            {
-                ingredientsList.Add(new Ingredient(material, ingredients[material]));
-            }
-        }
-
-        public static void IconsFromList(IList<Ingredient> ingredients, out List<TooltipIcon> icons)
-        {
-            icons = new List<TooltipIcon>();
-            foreach (Ingredient ingredient in ingredients)
-            {
-                TechType techType = ingredient.techType;
-                Sprite sprite = SpriteManager.Get(techType);
-                icons.Add(new TooltipIcon(sprite, techType.AsString()));
-            }
-        }
-
-        public static void AddToStack(TechType techType, int ammount, ref Stack<Resource> resourceStack)
-        {
-            CreateStack(techType, ref resourceStack, ammount);
-            OrganizeCraftStack(ref resourceStack);
-        }
-
         public static void IsFuffiled(TechType techType, out bool alreadyPassed)
         {
             if (!GameModeUtils.RequiresIngredients()) 
@@ -159,7 +60,7 @@ namespace ChainCrafting
             craftStack = new Stack<Resource>();
             CreateStack(resource, ref craftStack, 1);
             OrganizeCraftStack(ref craftStack);
-            RemoveOwned(ref craftStack, inventory);
+            RemoveOwned(ref craftStack, inventory, resource);
         }
 
 
@@ -200,18 +101,19 @@ namespace ChainCrafting
             }
         }
 
-        public static void RemoveOwned(ref Stack<Resource> craftStack, Inventory inventory)
+        public static void RemoveOwned(ref Stack<Resource> craftStack, Inventory inventory, TechType target = TechType.None)
         {
+            if(!craftStack.Any()) return;
             Dictionary<TechType, int> catalog = new();
             Stack<Resource> tempStack = new();
-            TechType target = craftStack.Last().Type;
             while (craftStack.Any())
             {
                 Resource item = craftStack.Pop();
                 int owned = inventory.GetPickupCount(item.Type);
                 int removedCount = Math.Min(item.Amount, owned);
                 int itemYield = item.Yield;
-                catalog[item.Type] = (int)Math.Ceiling((float)Math.Max(0, item.Amount - removedCount) / itemYield);
+                if(item.Type != target) catalog[item.Type] = (int)Math.Ceiling((float)Math.Max(0, item.Amount - removedCount) / itemYield);
+                else catalog[item.Type] = item.Amount;
                 GetRequirements(item, out Stack<Resource> requirements);
                 if (item.Type != target && removedCount > 0)
                 {
@@ -219,7 +121,8 @@ namespace ChainCrafting
                     {
                         Resource requirement = requirements.Pop();
                         TechType type = requirement.Type;
-                        if (catalog.ContainsKey(type)) catalog[type] = (int)Math.Ceiling((float)Math.Max(0, requirement.Amount - removedCount) / requirement.Yield);
+                        int requiredAmount = (int)Math.Ceiling((float)(requirement.Amount - removedCount) / requirement.Yield);
+                        if (catalog.ContainsKey(type)) catalog[type] = (int)Math.Ceiling((float)Math.Max(0, requiredAmount));
                     }
                 }
                 tempStack.Push(item);
