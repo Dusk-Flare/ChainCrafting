@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using ChainCrafting.Configs;
+using ChainCrafting.CraftingLogic;
 using ChainCrafting.uiLogic;
 using HarmonyLib;
 using Nautilus.Handlers;
@@ -31,12 +32,10 @@ namespace ChainCrafting
 
             Harmony.CreateAndPatchAll(Assembly, $"{PluginInfo.PLUGIN_GUID}");
             OptionsPanelHandler.RegisterModOptions(Menu = new());
-            uGUI_CraftingHelper crafthelper = new();
-            crafthelper.Awake();
             CraftingHelper = EnumHandler.AddEntry<PDATab>("CraftingHelper");
             CraftingInputs.OnCrftingHelperOpen += () =>
             {
-                crafthelper.Open();
+                Player.main.GetPDA()?.Open(CraftingHelper);
             };
             CraftingInputs.OnMissingCraftUpdate += () =>
             {
@@ -59,16 +58,16 @@ namespace ChainCrafting
         [HarmonyPatch(typeof(CrafterLogic))]
         [HarmonyPatch(nameof(CrafterLogic.IsCraftRecipeFulfilled))]
         [HarmonyPostfix]
-        public static void Validate(TechType techType, ref bool __result)
+        public static void IsCraftRecipeFulfilled(TechType techType, ref bool __result)
         {
-            CraftingLogic.IsFuffiled(techType, out bool alreadyPassed);
+            Validate.IsFuffiled(techType, out bool alreadyPassed);
             __result = alreadyPassed;
         }
 
         [HarmonyPatch(typeof(CrafterLogic))]
         [HarmonyPatch(nameof(CrafterLogic.ConsumeResources))]
         [HarmonyPostfix]
-        public static void ConsumePrefix(ref bool __result)
+        public static void ConsumeResources(ref bool __result)
         {
             __result = true;
         }
@@ -76,10 +75,10 @@ namespace ChainCrafting
         [HarmonyPatch(typeof(GhostCrafter))]
         [HarmonyPatch(nameof(GhostCrafter.Craft))]
         [HarmonyPrefix]
-        public static bool Prefix(GhostCrafter __instance, TechType techType)
+        public static bool Craft(GhostCrafter __instance, TechType techType)
         {
             if (!GameModeUtils.RequiresIngredients()) return true;
-            __instance.StartCoroutine(CraftingLogic.Craft(__instance, techType));
+            __instance.StartCoroutine(Logic.Craft(__instance, techType));
             return false;
         }
     }

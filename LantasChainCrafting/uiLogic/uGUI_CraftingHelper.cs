@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using ChainCrafting.Utils;
+using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -37,7 +38,7 @@ namespace ChainCrafting.uiLogic
             Instance = this;
         }
 
-        private void Start()
+        public void Start()
         {
             GameObject label = transform.Find("Content/LogLabel").gameObject;
             label.name = "Crafting Helper";
@@ -46,7 +47,16 @@ namespace ChainCrafting.uiLogic
             GetComponentInChildren<RectMask2D>().enabled = true;
         }
 
-        private void OnDestroy()
+        public void DisplayTree(ResourceTree tree)
+        {
+            foreach (ResourceTree child in tree)
+            {
+                Plugin.Logger.LogInfo($"Resource: {child.Resource.Type}, Craftable: {child.Resource.Craftable}, PickupCount: {child.Resource.PickupCount}, Yield: {child.Resource.Yield}");
+                GameObject item;
+            }
+        }
+
+        public void OnDestroy()
         {
             Instance = null;
         }

@@ -2,26 +2,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using ChainCrafting.Utils;
 using System.Linq;
 
-namespace ChainCrafting
+namespace ChainCrafting.CraftingLogic
 {
-    public record Resource(TechType Type, int Amount)
-    {
-        public Resource(TechType type) : this(type, 1) { }
-        public Resource(KeyValuePair<TechType, int> pair) : this(pair.Key, pair.Value) { }
-        public Resource(Ingredient ingredient) : this(ingredient.techType, ingredient.amount) { }
-
-
-        public bool Craftable => CraftTree.IsCraftable(Type);
-        public int PickupCount => Inventory.main.GetPickupCount(Type);
-        public int Yield => TechData.GetCraftAmount(Type);
-
-        public static implicit operator Resource(KeyValuePair<TechType, int> pair) => new(pair);
-        public static implicit operator Resource(Ingredient ingredient) => new(ingredient);
-    }
-
-    public static class CraftingLogic
+    public static class Logic
     {
         public static IEnumerator Craft(Crafter crafter, TechType techType)
         {
@@ -32,28 +18,12 @@ namespace ChainCrafting
                 TechType next = item.Type;
                 for (int i = 0; i < item.Amount; i++)
                 {
-                    TechData.GetCraftTime(next, out float craftTime);
-                    craftTime = Math.Max(craftTime, 2.7f);
                     if (!Consume(next)) continue;
-                    crafter._logic.Craft(next, craftTime);
+                    crafter._logic.Craft(next, Math.Max(item.CraftTime, 2.7f));
                     while (crafter.HasCraftedItem()) yield return null;
                 }
             }
         }
-
-        public static void IsFuffiled(TechType techType, out bool alreadyPassed)
-        {
-            if (!GameModeUtils.RequiresIngredients()) 
-            { 
-                alreadyPassed = true; 
-                return; 
-            }
-            Inventory inventory = Inventory.main;
-            ChainCraft(techType, inventory, out Stack<Resource> craftStack);
-            CostOfCraft(craftStack, out Dictionary<TechType, int> entryCost);
-            ValidateCraft(inventory, entryCost, out alreadyPassed);
-        }
-
 
         public static void ChainCraft(TechType resource, Inventory inventory, out Stack<Resource> craftStack)
         {
@@ -134,26 +104,6 @@ namespace ChainCrafting
             }
         }
 
-        public static void CostOfCraft(Stack<Resource> craftStack, out Dictionary<TechType, int> entryCost)
-        {
-            entryCost = new();
-            foreach (Resource resource in craftStack)
-            {
-                int materialCount = resource.Amount;
-                if (materialCount <= 0) continue;
-
-                ReadOnlyCollection<Ingredient> ingredients = TechData.GetIngredients(resource.Type);
-                foreach (Ingredient ingredient in ingredients)
-                {
-                    TechType type = ingredient.techType;
-                    if (CraftTree.IsCraftable(type)) continue;
-                    int amount = ingredient.amount * materialCount;
-                    if (entryCost.ContainsKey(type)) entryCost[type] += amount;
-                    else entryCost[type] = amount;
-                }
-            }
-        }
-
         public static bool Consume(TechType techType)
         {
             if (CrafterLogic.IsCraftRecipeFulfilled(techType))
@@ -163,34 +113,6 @@ namespace ChainCrafting
             }
             ErrorMessage.AddWarning(Language.main.Get("DontHaveNeededIngredients"));
             return false;
-        }
-
-        public static bool IsInCraftingTree(TechType techType, CraftTree.Type craftingTree)
-        {
-            if (craftingTree is CraftTree.Type.None) return false;
-            CraftTree tree = CraftTree.GetTree(craftingTree);
-            CraftNode node = tree.nodes;
-            HashSet<TechType> recipies = new();
-            IEnumerator<CraftNode> enumerator = node.Traverse();
-            while (enumerator.MoveNext())
-            {
-                recipies.Add(enumerator.Current.techType0);
-            }
-            return recipies.Contains(techType);
-        }
-
-        private static void ValidateCraft(Inventory inventory, Dictionary<TechType, int> entryCost, out bool valid)
-        {
-            foreach (TechType material in entryCost.Keys)
-            {
-                if (entryCost[material] > inventory.GetPickupCount(material))
-                {
-                    valid = false;
-                    return;
-                }
-            }
-            valid = true;
-            return;
         }
     }
 }

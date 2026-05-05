@@ -35,14 +35,14 @@ namespace ChainCrafting.Configs
 
 
         public static GameInput.Button MissingCrafts = EnumHandler.AddEntry<GameInput.Button>("Missing Crafts")
-        .CreateInput()
+        .CreateInput("Missing Crafts", "This keybind toggles the display of base ingredients in the crafting menu and pinned recipes")
         .WithKeyboardBinding(GameInputHandler.Paths.Keyboard.C)
         .WithControllerBinding(GameInputHandler.Paths.Gamepad.DpadLeft)
         .AvoidConflicts(GameInput.Device.Keyboard)
         .WithCategory(PluginInfo.PLUGIN_NAME);
 
         public static GameInput.Button CraftingHelper = EnumHandler.AddEntry<GameInput.Button>("Crafting Helper")
-        .CreateInput()
+        .CreateInput("Crafting Helper", "This keybind opens the crafting helper menu on your PDA")
         .WithKeyboardBinding(GameInputHandler.Paths.Mouse.MiddleButton)
         .WithControllerBinding(GameInputHandler.Paths.Gamepad.RightStick)
         .AvoidConflicts(GameInput.Device.Keyboard)
