@@ -51,35 +51,4 @@ namespace ChainCrafting
 
 
     }
-
-    [HarmonyPatch]
-    public static class ChainCrafting
-    {
-        [HarmonyPatch(typeof(CrafterLogic))]
-        [HarmonyPatch(nameof(CrafterLogic.IsCraftRecipeFulfilled))]
-        [HarmonyPostfix]
-        public static void IsCraftRecipeFulfilled(TechType techType, ref bool __result)
-        {
-            Validate.IsFuffiled(techType, out bool alreadyPassed);
-            __result = alreadyPassed;
-        }
-
-        [HarmonyPatch(typeof(CrafterLogic))]
-        [HarmonyPatch(nameof(CrafterLogic.ConsumeResources))]
-        [HarmonyPostfix]
-        public static void ConsumeResources(ref bool __result)
-        {
-            __result = true;
-        }
-
-        [HarmonyPatch(typeof(GhostCrafter))]
-        [HarmonyPatch(nameof(GhostCrafter.Craft))]
-        [HarmonyPrefix]
-        public static bool Craft(GhostCrafter __instance, TechType techType)
-        {
-            if (!GameModeUtils.RequiresIngredients()) return true;
-            __instance.StartCoroutine(Logic.Craft(__instance, techType));
-            return false;
-        }
-    }
 }

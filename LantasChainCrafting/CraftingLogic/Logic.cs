@@ -11,7 +11,7 @@ namespace ChainCrafting.CraftingLogic
     {
         public static IEnumerator Craft(Crafter crafter, TechType techType)
         {
-            ChainCraft(techType, Inventory.main, out Stack<Resource> craftStack);
+            ChainCraft(techType, out Stack<Resource> craftStack);
             while (craftStack.Any())
             {
                 Resource item = craftStack.Pop();
@@ -25,12 +25,12 @@ namespace ChainCrafting.CraftingLogic
             }
         }
 
-        public static void ChainCraft(TechType resource, Inventory inventory, out Stack<Resource> craftStack)
+        public static void ChainCraft(TechType resource, out Stack<Resource> craftStack)
         {
             craftStack = new Stack<Resource>();
             CreateStack(resource, ref craftStack, 1);
             OrganizeCraftStack(ref craftStack);
-            RemoveOwned(ref craftStack, inventory, resource);
+            RemoveOwned(ref craftStack, resource);
         }
 
 
@@ -71,7 +71,7 @@ namespace ChainCrafting.CraftingLogic
             }
         }
 
-        public static void RemoveOwned(ref Stack<Resource> craftStack, Inventory inventory, TechType target = TechType.None)
+        public static void RemoveOwned(ref Stack<Resource> craftStack, TechType target = TechType.None)
         {
             if(!craftStack.Any()) return;
             Dictionary<TechType, int> catalog = new();
@@ -79,7 +79,7 @@ namespace ChainCrafting.CraftingLogic
             while (craftStack.Any())
             {
                 Resource item = craftStack.Pop();
-                int owned = inventory.GetPickupCount(item.Type);
+                int owned = item.PickupCount;
                 int removedCount = Math.Min(item.Amount, owned);
                 int itemYield = item.Yield;
                 if(item.Type != target) catalog[item.Type] = (int)Math.Ceiling((float)Math.Max(0, item.Amount - removedCount) / itemYield);

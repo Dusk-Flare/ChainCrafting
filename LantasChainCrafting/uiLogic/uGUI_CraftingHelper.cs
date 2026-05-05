@@ -45,15 +45,22 @@ namespace ChainCrafting.uiLogic
             label.GetComponent<TextMeshProUGUI>().text = "This is the crafting helper";
 
             GetComponentInChildren<RectMask2D>().enabled = true;
-        }
 
-        public void DisplayTree(ResourceTree tree)
+            Sprite sprite = SpriteManager.Get(TechType.CopperWire);
+            CreateIcon(new(10, 10), sprite);
+        }
+        private void CreateIcon(Vector2 anchoredPosition, Sprite sprite)
         {
-            foreach (ResourceTree child in tree)
-            {
-                Plugin.Logger.LogInfo($"Resource: {child.Resource.Type}, Craftable: {child.Resource.Craftable}, PickupCount: {child.Resource.PickupCount}, Yield: {child.Resource.Yield}");
-                GameObject item;
-            }
+            GameObject iconObj = new("TechIcon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            iconObj.transform.SetParent(transform, false);
+
+            RectTransform rect = iconObj.GetComponent<RectTransform>();
+            rect.anchoredPosition = anchoredPosition;
+            rect.sizeDelta = new Vector2(40, 40);
+
+            Image img = iconObj.GetComponent<Image>();
+            img.sprite = sprite;
+            img.preserveAspect = true;
         }
 
         public void OnDestroy()

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using ChainCrafting.CraftingLogic;
 using ChainCrafting.Utils;
 using System.Linq;
 using System.Text;
@@ -20,10 +21,10 @@ namespace ChainCrafting.uiLogic
             foreach (Resource ingredient in ingredients)
             {
                 TechType techType = ingredient.Type;
-                CraftingLogic.CreateStack(techType, ref stack, ingredient.Amount);
+                Logic.CreateStack(techType, ref stack, ingredient.Amount);
             }
-            CraftingLogic.OrganizeCraftStack(ref stack);
-            CraftingLogic.CostOfCraft(stack, out Dictionary<TechType, int> fullCost);
+            Logic.OrganizeCraftStack(ref stack);
+            Validate.CostOfCraft(stack, out Dictionary<TechType, int> fullCost);
             IngredientList(fullCost, out IList<Ingredient> ingredientsList);
             GetCraftingStatus(ingredientsList, icons);
         }
@@ -37,9 +38,9 @@ namespace ChainCrafting.uiLogic
         public static void UpdateIngredients(uGUI_RecipeEntry self, ItemsContainer container, bool ping)
         {
             Stack<Resource> craftStack = new();
-            CraftingLogic.CreateStack(self.techType, ref craftStack, 1);
-            CraftingLogic.OrganizeCraftStack(ref craftStack);
-            CraftingLogic.CostOfCraft(craftStack, out Dictionary<TechType, int> entryCost);
+            Logic.CreateStack(self.techType, ref craftStack, 1);
+            Logic.OrganizeCraftStack(ref craftStack);
+            Validate.CostOfCraft(craftStack, out Dictionary<TechType, int> entryCost);
             List<Resource> resources = entryCost.Select(entry => new Resource(entry)).ToList();
             if (entryCost != null && entryCost.ContainsKey(self.techType)) entryCost.Remove(self.techType);
             int negative = -1;
@@ -63,7 +64,7 @@ namespace ChainCrafting.uiLogic
             {
                 Resource item = resources[i];
                 TechType techType = item.Type;
-                CraftingLogic.IsFuffiled(techType, out bool isCraftable);
+                Validate.IsFuffiled(techType, out bool isCraftable);
                 int count = container.GetCount(techType);
                 int amount = item.Amount;
                 uGUI_RecipeItem uGUI_RecipeItem2 = self.items[i];
@@ -124,7 +125,7 @@ namespace ChainCrafting.uiLogic
             {
                 Resource ingredient = ingredients[i];
                 TechType techType = ingredient.Type;
-                CraftingLogic.IsFuffiled(techType, out bool hasResources);
+                Validate.IsFuffiled(techType, out bool hasResources);
                 int count = container.GetCount(techType);
                 int amount = ingredient.Amount;
                 int num3 = count / amount;
@@ -187,7 +188,7 @@ namespace ChainCrafting.uiLogic
                 bool hasIngredients = false;
                 if (CraftTree.IsCraftable(techType))
                 {
-                    CraftingLogic.IsFuffiled(techType, out bool isCraftable);
+                    Validate.IsFuffiled(techType, out bool isCraftable);
                     hasIngredients = isCraftable;
                 }
                 Sprite sprite = SpriteManager.Get(techType);

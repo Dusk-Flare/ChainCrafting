@@ -17,8 +17,7 @@ namespace ChainCrafting.CraftingLogic
                 alreadyPassed = true;
                 return;
             }
-            Inventory inventory = Inventory.main;
-            Logic.ChainCraft(techType, inventory, out Stack<Resource> craftStack);
+            Logic.ChainCraft(techType, out Stack<Resource> craftStack);
             CostOfCraft(craftStack, out Dictionary<TechType, int> entryCost);
             ValidateCraft(entryCost, out alreadyPassed);
         }
