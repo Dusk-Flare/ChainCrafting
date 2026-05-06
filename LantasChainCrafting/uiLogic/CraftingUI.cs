@@ -21,11 +21,12 @@ namespace ChainCrafting.uiLogic
             foreach (Resource ingredient in ingredients)
             {
                 TechType techType = ingredient.Type;
-                Logic.CreateStack(techType, ref stack, ingredient.Amount);
+                Logic.CreateStack(techType, ingredient.Amount, ref stack);
             }
             Logic.OrganizeCraftStack(ref stack);
-            Validate.CostOfCraft(stack, out Dictionary<TechType, int> fullCost);
+            Validate.CostOfCraft(stack, out ResourceTable fullCost);
             IngredientList(fullCost, out IList<Ingredient> ingredientsList);
+            foreach (Resource ingredient in ingredients) if (!ingredient.Craftable) ingredientsList.Add(ingredient);
             GetCraftingStatus(ingredientsList, icons);
         }
 
@@ -38,11 +39,11 @@ namespace ChainCrafting.uiLogic
         public static void UpdateIngredients(uGUI_RecipeEntry self, ItemsContainer container, bool ping)
         {
             Stack<Resource> craftStack = new();
-            Logic.CreateStack(self.techType, ref craftStack, 1);
+            Logic.CreateStack(self.techType, 1, ref craftStack);
             Logic.OrganizeCraftStack(ref craftStack);
-            Validate.CostOfCraft(craftStack, out Dictionary<TechType, int> entryCost);
-            List<Resource> resources = entryCost.Select(entry => new Resource(entry)).ToList();
-            if (entryCost != null && entryCost.ContainsKey(self.techType)) entryCost.Remove(self.techType);
+            Validate.CostOfCraft(craftStack, out ResourceTable entryCost);
+            List<Resource> resources = entryCost.ToList();
+            if (entryCost != null && entryCost.Contains(self.techType)) entryCost.Remove(self.techType);
             int negative = -1;
             int yield = TechData.GetCraftAmount(self.techType);
             int totalCraftAmount = resources != null ? resources.Count() : 0;
@@ -222,13 +223,10 @@ namespace ChainCrafting.uiLogic
             }
         }
 
-        public static void IngredientList(Dictionary<TechType, int> ingredients, out IList<Ingredient> ingredientsList)
+        public static void IngredientList(ResourceTable ingredients, out IList<Ingredient> ingredientsList)
         {
             ingredientsList = new List<Ingredient>();
-            foreach (TechType material in ingredients.Keys)
-            {
-                ingredientsList.Add(new Ingredient(material, ingredients[material]));
-            }
+            foreach (Resource material in ingredients) ingredientsList.Add(material);
         }
 
         public static void IconsFromList(IList<Ingredient> ingredients, out List<TooltipIcon> icons)

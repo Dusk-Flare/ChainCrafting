@@ -10,12 +10,8 @@ namespace ChainCrafting.Configs
         public static bool OnHoldEnabled = false;
         public CraftingMenu() : base("Chain Options")
         {
-
             ModToggleOption OnHold = ModToggleOption.Create("OnHold", "Missing Ingredients On Hold", false, "Enabling this option will switch the \"Missing Crafts\" keybind from Toggle to Hold");
-            OnHold.OnChanged += (object sender, ToggleChangedEventArgs ToggleOnChange) =>
-            {
-               OnHoldEnabled = ToggleOnChange.Value;
-            };
+            OnHold.OnChanged += (sender, ToggleOnChange) => OnHoldEnabled = ToggleOnChange.Value;
             AddItem(OnHold);
         }
     }

@@ -18,26 +18,23 @@ namespace ChainCrafting.CraftingLogic
                 return;
             }
             Logic.ChainCraft(techType, out Stack<Resource> craftStack);
-            CostOfCraft(craftStack, out Dictionary<TechType, int> entryCost);
+            CostOfCraft(craftStack, out ResourceTable entryCost);
             ValidateCraft(entryCost, out alreadyPassed);
         }
 
-        public static void CostOfCraft(Stack<Resource> craftStack, out Dictionary<TechType, int> entryCost)
+        public static void CostOfCraft(Stack<Resource> craftStack, out ResourceTable entryCost)
         {
             entryCost = new();
             foreach (Resource resource in craftStack)
             {
                 int materialCount = resource.Amount;
-                if (materialCount <= 0) continue;
+                if (resource.Amount <= 0) continue;
 
                 ReadOnlyCollection<Ingredient> ingredients = TechData.GetIngredients(resource.Type);
                 foreach (Resource ingredient in ingredients)
                 {
-                    TechType type = ingredient.Type;
-                    if (CraftTree.IsCraftable(type)) continue;
-                    int amount = ingredient.Amount * materialCount;
-                    if (entryCost.ContainsKey(type)) entryCost[type] += amount;
-                    else entryCost[type] = amount;
+                    if (ingredient.Craftable) continue;
+                    entryCost.Add(ingredient.Type, ingredient.Amount * materialCount);
                 }
             }
         }
@@ -56,7 +53,7 @@ namespace ChainCrafting.CraftingLogic
             return recipies.Contains(techType);
         }
 
-        private static void ValidateCraft(Dictionary<TechType, int> entryCost, out bool valid)
+        private static void ValidateCraft(ResourceTable entryCost, out bool valid)
         {
             foreach (Resource material in entryCost)
             {

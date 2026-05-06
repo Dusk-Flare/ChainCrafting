@@ -28,7 +28,7 @@ namespace ChainCrafting.CraftingLogic
         public static void ChainCraft(TechType resource, out Stack<Resource> craftStack)
         {
             craftStack = new Stack<Resource>();
-            CreateStack(resource, ref craftStack, 1);
+            CreateStack(resource, 1, ref craftStack);
             OrganizeCraftStack(ref craftStack);
             RemoveOwned(ref craftStack, resource);
         }
@@ -37,44 +37,39 @@ namespace ChainCrafting.CraftingLogic
         public static void GetRequirements(Resource resource, out Stack<Resource> stack)
         {
             stack = new Stack<Resource>();
-            CreateStack(resource.Type, ref stack, resource.Amount);
+            CreateStack(resource.Type, resource.Amount, ref stack);
             OrganizeCraftStack(ref stack);
         }
 
-        public static void CreateStack(TechType recipe, ref Stack<Resource> stack, int amount)
+        public static void CreateStack(TechType recipe, int amount, ref Stack<Resource> stack)
         {
             if (recipe == TechType.None) return;
             if (!CraftTree.IsCraftable(recipe)) return;
-            stack.Push(new Resource(recipe, amount));
+            stack.Push(new(recipe, amount));
             ReadOnlyCollection<Ingredient> component = TechData.GetIngredients(recipe);
-            foreach (Ingredient ingredient in component) CreateStack(ingredient.techType, ref stack, ingredient.amount * amount);
+            foreach (Ingredient ingredient in component) CreateStack(ingredient.techType, ingredient.amount * amount, ref stack);
         }
 
         public static void OrganizeCraftStack(ref Stack<Resource> craftStack)
         {
-            Dictionary<TechType, int> catalog = new();
+            ResourceTable catalog = new();
             Stack<Resource> tempStack = new();
             while (craftStack.Any())
             {
                 Resource resource = craftStack.Pop();
-                if (!catalog.ContainsKey(resource.Type))
-                {
-                    catalog.Add(resource.Type, resource.Amount);
-                    tempStack.Push(resource);
-                }
-                else catalog[resource.Type] += resource.Amount;
+                if (!catalog.Add(resource)) tempStack.Push(resource);
             }
             while (tempStack.Any())
             {
                 TechType resource = tempStack.Pop().Type;
-                craftStack.Push(new Resource(resource, catalog[resource]));
+                craftStack.Push(new(resource, catalog.GetAmmount(resource)));
             }
         }
 
         public static void RemoveOwned(ref Stack<Resource> craftStack, TechType target = TechType.None)
         {
             if(!craftStack.Any()) return;
-            Dictionary<TechType, int> catalog = new();
+            ResourceTable catalog = new();
             Stack<Resource> tempStack = new();
             while (craftStack.Any())
             {
@@ -82,8 +77,8 @@ namespace ChainCrafting.CraftingLogic
                 int owned = item.PickupCount;
                 int removedCount = Math.Min(item.Amount, owned);
                 int itemYield = item.Yield;
-                if(item.Type != target) catalog[item.Type] = (int)Math.Ceiling((float)Math.Max(0, item.Amount - removedCount) / itemYield);
-                else catalog[item.Type] = item.Amount;
+                if(item.Type != target) catalog.Set(item.Type, (int)Math.Ceiling((float)Math.Max(0, item.Amount - removedCount) / itemYield));
+                else catalog.Set(item);
                 GetRequirements(item, out Stack<Resource> requirements);
                 if (item.Type != target && removedCount > 0)
                 {
@@ -92,7 +87,7 @@ namespace ChainCrafting.CraftingLogic
                         Resource requirement = requirements.Pop();
                         TechType type = requirement.Type;
                         int requiredAmount = (int)Math.Ceiling((float)(requirement.Amount - removedCount) / requirement.Yield);
-                        if (catalog.ContainsKey(type)) catalog[type] = (int)Math.Ceiling((float)Math.Max(0, requiredAmount));
+                        if (catalog.Contains(type)) catalog.Set(type, (int)Math.Ceiling((float)Math.Max(0, requiredAmount)));
                     }
                 }
                 tempStack.Push(item);
@@ -100,7 +95,7 @@ namespace ChainCrafting.CraftingLogic
             while (tempStack.Any())
             {
                 TechType item = tempStack.Pop().Type;
-                craftStack.Push(new Resource(item, catalog[item]));
+                craftStack.Push(new Resource(item, catalog.GetAmmount(item)));
             }
         }
 

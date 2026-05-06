@@ -1,6 +1,8 @@
-﻿using System;
+﻿using Mono.Cecil;
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -35,9 +37,47 @@ namespace ChainCrafting.Utils
             return list;
         }
 
+        public static implicit operator Ingredient(Resource resource) => new(resource.Type, resource.Amount);
         public static implicit operator Resource(uGUI_CraftingMenu.Node node) => new(node);
         public static implicit operator Resource(KeyValuePair<TechType, int> pair) => new(pair);
         public static implicit operator Resource(Ingredient ingredient) => new(ingredient);
+    }
+
+    public record ResourceTable(Dictionary<TechType, int> Resources)
+    {
+        public ResourceTable() : this(new Dictionary<TechType, int>()) { }
+        public bool Contains(TechType type) => Resources.ContainsKey(type);
+        public bool Contains(Resource resource) => Contains(resource.Type);
+
+        public int GetAmmount(TechType type) => Resources[type];
+        public Dictionary<TechType, int>.KeyCollection Keys => Resources.Keys;
+        public Dictionary<TechType,int>.ValueCollection Values => Resources.Values;
+
+        public void Set(TechType type, int ammount) => Resources[type] = ammount;
+
+        public bool Add(TechType type, int amount)
+        {
+            if (Contains(type)) 
+            { 
+                Resources[type] += amount; 
+                return true;
+            }
+            Resources[type] = amount; 
+            return false;
+        }
+        public void Remove(TechType type) => Resources.Remove(type);
+        public void Remove(TechType type, int amount)
+        {
+            if (Contains(type)) Resources[type] -= amount;
+            if (Resources[type] <= 0) Remove(type);
+        }
+        public void Set(Resource resource) => Set(resource.Type, resource.Amount);
+        public bool Add(Resource resource) => Add(resource.Type, resource.Amount);
+        public void Remove(Resource resource) => Remove(resource.Type, resource.Amount);
+        public void Clear() => Resources.Clear();
+        public Dictionary<TechType, int>.Enumerator GetEnumerator() => Resources.GetEnumerator();
+        public List<Resource> ToList() => Resources.Select(entry => new Resource(entry)).ToList();
+        public static implicit operator ResourceTable(Dictionary<TechType, int> resources) => new(resources);
     }
 
     public record ResourceTree(Resource Resource, List<ResourceTree> Children) : IEnumerable<ResourceTree>, IEnumerable
