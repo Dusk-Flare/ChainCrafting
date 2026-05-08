@@ -1,5 +1,6 @@
 ﻿using ChainCrafting.Configs;
 using HarmonyLib;
+using Nautilus.Handlers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -44,6 +45,17 @@ namespace ChainCrafting.uiLogic
         private static void Deinitialize(uGUI_PinnedRecipes __instance)
         {
             CraftingInputs.OnMissingCraftUpdate -= () => __instance.ingredientsDirty = true;
+        }
+
+        [HarmonyPatch(typeof(uGUI_BlueprintsTab))]
+        [HarmonyPatch(nameof(uGUI_BlueprintsTab.OnPointerClick))]
+        [HarmonyPrefix]
+        private static bool OnPointerClick(int button)
+        {
+            string myInput0 = GameInput.GetBinding(GameInput.PrimaryDevice, CraftingInputs.CraftingHelper, GameInput.BindingSet.Primary);
+            string myInput1 = GameInput.GetBinding(GameInput.PrimaryDevice, CraftingInputs.CraftingHelper, GameInput.BindingSet.Secondary);
+            string binding = GameInputHandler.Paths.Mouse.MiddleButton;
+            return !((binding == myInput0 || binding == myInput1) && button == 2);
         }
     }
 }

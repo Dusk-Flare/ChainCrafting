@@ -36,6 +36,9 @@ namespace ChainCrafting.Utils
             foreach (var pair in dictionary) list.Add(pair);
             return list;
         }
+        public static Resource operator +(Resource resource, int value) => resource with { Amount = resource.Amount + value };
+        public static Resource operator -(Resource resource, int value) => resource with { Amount = resource.Amount - value };
+        public static Resource operator *(Resource resource, int value) => resource with { Amount = resource.Amount * value };
 
         public static implicit operator Ingredient(Resource resource) => new(resource.Type, resource.Amount);
         public static implicit operator Resource(uGUI_CraftingMenu.Node node) => new(node);
@@ -48,11 +51,21 @@ namespace ChainCrafting.Utils
         public ResourceTable() : this(new Dictionary<TechType, int>()) { }
         public bool Contains(TechType type) => Resources.ContainsKey(type);
         public bool Contains(Resource resource) => Contains(resource.Type);
-
-        public int GetAmmount(TechType type) => Resources[type];
         public Dictionary<TechType, int>.KeyCollection Keys => Resources.Keys;
-        public Dictionary<TechType,int>.ValueCollection Values => Resources.Values;
+        public Dictionary<TechType, int>.ValueCollection Values => Resources.Values;
 
+        public Resource this[TechType type] 
+        { 
+            get 
+            {
+                if (Resources.TryGetValue(type, out int amount)) return new(type, amount);
+                return null;
+            }
+            set
+            {
+                Set(type, value.Amount);
+            }
+        }
         public void Set(TechType type, int ammount) => Resources[type] = ammount;
 
         public bool Add(TechType type, int amount)
@@ -68,8 +81,11 @@ namespace ChainCrafting.Utils
         public void Remove(TechType type) => Resources.Remove(type);
         public void Remove(TechType type, int amount)
         {
-            if (Contains(type)) Resources[type] -= amount;
-            if (Resources[type] <= 0) Remove(type);
+            if (Contains(type)) 
+            {
+                Resources[type] -= amount;
+                if (Resources[type] <= 0) Remove(type);
+            }
         }
         public void Set(Resource resource) => Set(resource.Type, resource.Amount);
         public bool Add(Resource resource) => Add(resource.Type, resource.Amount);

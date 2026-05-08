@@ -62,7 +62,7 @@ namespace ChainCrafting.CraftingLogic
             while (tempStack.Any())
             {
                 TechType resource = tempStack.Pop().Type;
-                craftStack.Push(new(resource, catalog.GetAmmount(resource)));
+                craftStack.Push(catalog[resource]);
             }
         }
 
@@ -95,7 +95,7 @@ namespace ChainCrafting.CraftingLogic
             while (tempStack.Any())
             {
                 TechType item = tempStack.Pop().Type;
-                craftStack.Push(new Resource(item, catalog.GetAmmount(item)));
+                craftStack.Push(catalog[item]);
             }
         }
 

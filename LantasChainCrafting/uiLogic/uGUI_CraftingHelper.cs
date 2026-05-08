@@ -9,7 +9,8 @@ namespace ChainCrafting.uiLogic
 {
     public class uGUI_CraftingHelper : uGUI_PDATab
     {
-        public uGUI_CraftingHelper Instance
+        public static TechType CurrentTechType { get; set; }
+        public static uGUI_CraftingHelper Instance
         {
             get
             {

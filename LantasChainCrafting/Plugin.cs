@@ -35,7 +35,18 @@ namespace ChainCrafting
             CraftingHelper = EnumHandler.AddEntry<PDATab>("CraftingHelper");
             CraftingInputs.OnCrftingHelperOpen += () =>
             {
-                Player.main.GetPDA()?.Open(CraftingHelper);
+                PDA pda = Player.main.GetPDA();
+                if (pda == null) return;
+                if(pda.isOpen) 
+                { 
+                    Logger.LogInfo("PDA is already open, opening Crafting Helper tab");
+                    pda.ui.OpenTab(CraftingHelper);
+                }
+                else
+                {
+                    Logger.LogInfo("PDA is not open, opening Crafting Helper tab");
+                    pda.Open(CraftingHelper);
+                }
             };
             CraftingInputs.OnMissingCraftUpdate += () =>
             {
