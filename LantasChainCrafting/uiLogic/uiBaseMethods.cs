@@ -15,7 +15,7 @@ namespace ChainCrafting.uiLogic
             Plugin.Logger.LogInfo($"Clicked on {techType}");
             if (self.IsUnlocked(techType))
             {
-                uGUI_CraftingHelper.CurrentTechType = techType;
+                uGUI_CraftingHelper.TreeType = techType;
                 CraftingInputs.OnCrftingHelperOpen?.Invoke();
             }
             __result = true;

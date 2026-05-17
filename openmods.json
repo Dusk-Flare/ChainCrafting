@@ -1,0 +1,36 @@
+{
+  "thumbnail": "ChainCraft.png",
+
+  "install": {
+    "path": "BepInEx/plugins/LantasChainCrafting"
+  },
+
+  "links": [
+    {
+      "label": "Nexus",
+      "url": "https://nexusmods.com/subnautica/mods/3377"
+    }
+  ],
+
+  "faq": [
+    {
+      "question": "Does this mod work with custom or edited recipies?",
+      "answer": "Chain Crafting asks the game for each recipe and does not hardcode any of them, so it should work fine with any custom or edited recipes."
+    },
+    {
+      "question": "You know EasyCraft exists right?",
+      "answer": "Yes, i am fully aware, i made this mod to learn, but if you give it a try, you might just enjoy it."
+    },
+    {
+      "question": "What should i do if your mod is incompatible with my other mods?",
+      "answer": "Please notify me imediatelly, and i'll do my best to figure out a way to make it compatible, tho, i have no guarantees that i'll be able to'."
+    }
+  ],
+
+  "dependencies": {
+    "2.0.0": [
+      { "modId": 30 },
+      { "modId": 31 }
+    ]
+  }
+}

@@ -4,8 +4,10 @@ using Nautilus.Handlers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace ChainCrafting.uiLogic
 {
@@ -56,6 +58,34 @@ namespace ChainCrafting.uiLogic
             string myInput1 = GameInput.GetBinding(GameInput.PrimaryDevice, CraftingInputs.CraftingHelper, GameInput.BindingSet.Secondary);
             string binding = GameInputHandler.Paths.Mouse.MiddleButton;
             return !((binding == myInput0 || binding == myInput1) && button == 2);
+        }
+
+        [HarmonyPatch(typeof(uGUI_BlueprintsTab))]
+        [HarmonyPatch(nameof(uGUI_BlueprintsTab.OnPointerEnter))]
+        [HarmonyPrefix]
+        public static void OnPointerEnter(uGUI_BlueprintsTab __instance, uGUI_BlueprintEntry entry)
+        {
+            TechType type = __instance.GetTechType(entry);
+            Plugin.Logger.LogInfo($"Hovering over {type}");
+            Plugin.tempType = type;
+        }
+
+        [HarmonyPatch(typeof(uGUI_BlueprintsTab))]
+        [HarmonyPatch(nameof(uGUI_BlueprintsTab.OnPointerExit))]
+        [HarmonyPrefix]
+        public static void OnPointerExit() => Plugin.tempType = TechType.None;
+
+        [HarmonyPatch(typeof(uGUI_PDA))]
+        [HarmonyPatch(nameof(uGUI_PDA.Initialize))]
+        [HarmonyPostfix]
+        private static void Initialize_Postfix(uGUI_PDA __instance)
+        {
+            GameObject craftTab = GameObject.Instantiate(__instance.tabLog.gameObject, __instance.transform.Find("Content"));
+            craftTab.name = "Crafting Helper";
+            GameObject.DestroyImmediate(craftTab.GetComponent<uGUI_LogTab>());
+            craftTab.AddComponent<uGUI_CraftingHelper>();
+
+            __instance.tabs.Add(Plugin.CraftingHelper, craftTab.GetComponent<uGUI_PDATab>());
         }
     }
 }

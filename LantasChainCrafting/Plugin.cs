@@ -24,6 +24,7 @@ namespace ChainCrafting
         public static Color craftableColor = new(1.0f, 0.886f, 0.031f, 1.0f);
         public static Color unavailableColor = new(0.87f, 0.25f, 0.15f, 1.0f);
         public static CraftingMenu Menu { get; private set; }
+        public static TechType tempType;
         public static PDATab CraftingHelper;
         private void Awake()
         {
@@ -40,7 +41,12 @@ namespace ChainCrafting
                 if(pda.isOpen) 
                 { 
                     Logger.LogInfo("PDA is already open, opening Crafting Helper tab");
-                    pda.ui.OpenTab(CraftingHelper);
+                    if(tempType != TechType.None)
+                    { 
+                        uGUI_CraftingHelper.TreeType = tempType; 
+                    }
+                    if(pda.ui.currentTabType != CraftingHelper) pda.ui.OpenTab(CraftingHelper);
+                    else pda.Close();
                 }
                 else
                 {

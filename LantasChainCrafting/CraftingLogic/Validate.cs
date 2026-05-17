@@ -30,8 +30,7 @@ namespace ChainCrafting.CraftingLogic
                 int materialCount = resource.Amount;
                 if (resource.Amount <= 0) continue;
 
-                ReadOnlyCollection<Ingredient> ingredients = TechData.GetIngredients(resource.Type);
-                foreach (Resource ingredient in ingredients)
+                foreach (Resource ingredient in resource.Ingredients)
                 {
                     if (ingredient.Craftable) continue;
                     entryCost.Add(ingredient.Type, ingredient.Amount * materialCount);

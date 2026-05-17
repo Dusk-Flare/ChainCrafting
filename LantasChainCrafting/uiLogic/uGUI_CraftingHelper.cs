@@ -9,7 +9,18 @@ namespace ChainCrafting.uiLogic
 {
     public class uGUI_CraftingHelper : uGUI_PDATab
     {
-        public static TechType CurrentTechType { get; set; }
+        private static TechType _currentType;
+        public static TechType TreeType 
+        { 
+            get => _currentType;
+            set
+            {
+                Plugin.Logger.LogInfo($"CurrentTechType: {_currentType}");
+                _currentType = value;
+                Plugin.Logger.LogInfo($"CurrentTechType set to {value}.");
+                _instance.UpdateIcon(new(10, 10), value);
+            } 
+        }
         public static uGUI_CraftingHelper Instance
         {
             get
@@ -43,25 +54,53 @@ namespace ChainCrafting.uiLogic
         {
             GameObject label = transform.Find("Content/LogLabel").gameObject;
             label.name = "Crafting Helper";
-            label.GetComponent<TextMeshProUGUI>().text = "This is the crafting helper";
+            label.GetComponent<TextMeshProUGUI>().text = "Crafting Helper";
 
-            GetComponentInChildren<RectMask2D>().enabled = true;
-
-            Sprite sprite = SpriteManager.Get(TechType.CopperWire);
-            CreateIcon(new(10, 10), sprite);
+            CreateIcon(new(10, 10), TechType.PowerCell);
         }
-        private void CreateIcon(Vector2 anchoredPosition, Sprite sprite)
+        private void CreateIcon(Vector2 anchoredPosition, TechType type)
         {
-            GameObject iconObj = new("TechIcon", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            iconObj.transform.SetParent(transform, false);
+            if (type == TechType.None) return;
+            Sprite sprite = SpriteManager.Get(type);
+            GameObject iconObj = new("TechIcon", typeof(CanvasRenderer), typeof(Image));
+            iconObj.transform.SetParent(canvas.transform, false);
 
-            RectTransform rect = iconObj.GetComponent<RectTransform>();
-            rect.anchoredPosition = anchoredPosition;
-            rect.sizeDelta = new Vector2(40, 40);
+            //RectTransform rect = iconObj.GetComponent<RectTransform>();
+            //rect.anchoredPosition = anchoredPosition;
+            //rect.sizeDelta = new Vector2(400, 400);
+            /*Dictionary<int, List<Resource>> wawa = new _ResourceTree(new(type)).Layers;
+            foreach(KeyValuePair<int, List<Resource>> pair in wawa)
+            {
+                foreach(Resource resource in pair.Value) Plugin.Logger.LogInfo($"{pair.Key}: {resource.Type}");
+            }*/
 
             Image img = iconObj.GetComponent<Image>();
             img.sprite = sprite;
             img.preserveAspect = true;
+        }
+
+        private void UpdateIcon(Vector2 anchoredPosition, TechType type)
+        {
+            Image img = canvas.transform.Find("TechIcon").GetComponent<Image>();
+            if (type == TechType.None)
+            {
+                img.enabled = false;
+                return;
+            }
+            Sprite sprite = SpriteManager.Get(type);
+            img.sprite = sprite;
+            img.preserveAspect = true;
+            img.enabled = true;
+        }
+
+        public override void Open()
+        {
+            canvas.SetVisible(true);
+        }
+
+        public override void Close()
+        {
+            canvas.SetVisible(false);
         }
 
         public void OnDestroy()
