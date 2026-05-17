@@ -2,7 +2,7 @@
   "thumbnail": "ChainCraft.png",
 
   "install": {
-    "path": "BepInEx/plugins/LantasChainCrafting"
+    "path": "BepInEx/plugins"
   },
 
   "links": [
