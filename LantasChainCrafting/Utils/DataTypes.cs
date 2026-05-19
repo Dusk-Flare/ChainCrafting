@@ -51,6 +51,7 @@ namespace ChainCrafting.Utils
         public static implicit operator Resource(uGUI_CraftingMenu.Node node) => new(node);
         public static implicit operator Resource(KeyValuePair<TechType, int> pair) => new(pair);
         public static implicit operator Resource(Ingredient ingredient) => new(ingredient);
+        public override string ToString() => $"{Type}: {Amount}";
     }
 
     public record ResourceTable(Dictionary<TechType, int> Resources)
@@ -200,50 +201,61 @@ namespace ChainCrafting.Utils
         private ResourceTree Parent { init; get; }
         private ResourceTree Root { init; get; }
         private readonly int layer;
-        private List<ResourceTree> children = new();
-        private int Depth 
-        {
-            get
-            {
-                int depth = layer;
-                if(children.Count == 0) return depth;
-                foreach (ResourceTree child in children) depth = Math.Max(depth, child.Depth);
-                return depth;
-            }
-        }
+        private readonly List<ResourceTree> children = new();
         public ResourceTree(ResourceTree parent, Resource data, int layer = 0)
         {
-            Root = parent ?? this;
             Parent = parent;
             Data = data ?? new(TechType.None);
+            Root = GetRoot();
             this.layer = layer;
             foreach (Resource child in data.Ingredients) AddChild(child);
-            if(this.layer > Root.Depth) Equalise(layer, Root);
+            if (Root == this) Padd(Root, Root.layer, Depth(Root));
         }
 
-        public static void Equalise(int targetDepth, ResourceTree currentNode)
+        public int GetOuterRing() 
         {
-            if(currentNode.children.Count == 0 && targetDepth > currentNode.layer) currentNode.AddChild();
-            foreach (ResourceTree child in currentNode.children) Equalise(targetDepth, child);
+            return GetLayer(Root, Depth(Root));
         }
 
-        bool LayerHasChildren(int target, ResourceTree currentNode)
+        private static int GetLayer(ResourceTree node, int target)
         {
-            bool result = false;
-            if (currentNode.layer < target)
-            {
-                foreach (ResourceTree child in currentNode.children) 
-                { 
-                    result |= LayerHasChildren(target, child);
-                }
-            }
-            else result = currentNode.children.Count > 0;
-            return result;
+            if (node.layer == target) return 1;
+            int sum = 0;
+            foreach (ResourceTree child in node.children) sum += GetLayer(child, target);
+            return sum;
+        }
+
+        public ResourceTree GetRoot()
+        {
+            if (Parent == null) return this;
+            return Parent.GetRoot();
+        }
+
+        private static int Depth(ResourceTree node)
+        {
+            int depth = node.layer;
+            if (node.children.Count == 0) return depth;
+            foreach (ResourceTree child in node.children) depth = Math.Max(depth, Depth(child));
+            return depth;
+        }
+
+        public static void Padd(ResourceTree currentNode, int depth, int maxDepth)
+        {
+            if (depth >= maxDepth) return;
+            if (currentNode.children.Count == 0) currentNode.AddChild();
+            foreach (ResourceTree child in currentNode.children) Padd(child, child.layer, maxDepth);
         }
 
         public void AddChild(Resource child = null) 
         {
+            child ??= new();
             children.Add(new(this, child, layer + 1));
+        }
+
+        public void LogTree()
+        {
+            Plugin.Logger.LogInfo(Data);
+            foreach (ResourceTree child in children) child.LogTree();
         }
     }
 }

@@ -56,7 +56,7 @@ namespace ChainCrafting.uiLogic
             label.name = "Crafting Helper";
             label.GetComponent<TextMeshProUGUI>().text = "Crafting Helper";
 
-            CreateIcon(new(10, 10), TechType.PowerCell);
+            CreateIcon(new(10, 10), TechType.Welder);
         }
         private void CreateIcon(Vector2 anchoredPosition, TechType type)
         {
@@ -68,15 +68,18 @@ namespace ChainCrafting.uiLogic
             //RectTransform rect = iconObj.GetComponent<RectTransform>();
             //rect.anchoredPosition = anchoredPosition;
             //rect.sizeDelta = new Vector2(400, 400);
-            /*Dictionary<int, List<Resource>> wawa = new _ResourceTree(new(type)).Layers;
-            foreach(KeyValuePair<int, List<Resource>> pair in wawa)
-            {
-                foreach(Resource resource in pair.Value) Plugin.Logger.LogInfo($"{pair.Key}: {resource.Type}");
-            }*/
+            ResourceTree wawa = new(null, new(type));
+            Plugin.Logger.LogInfo($"{wawa.Data}: 360 / {wawa.GetOuterRing()}");
+            wawa.GetRoot().LogTree();
+
 
             Image img = iconObj.GetComponent<Image>();
             img.sprite = sprite;
             img.preserveAspect = true;
+        }
+
+        private void DrawArch(double innerRad, double outerRad, double startAngle, int membercount, int ringLayer)
+        {
         }
 
         private void UpdateIcon(Vector2 anchoredPosition, TechType type)

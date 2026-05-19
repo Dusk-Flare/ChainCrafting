@@ -1,6 +1,4 @@
-﻿using Nautilus.Handlers;
-using Nautilus.Options;
-using System;
+﻿using Nautilus.Options;
 
 namespace ChainCrafting.Configs
 {
