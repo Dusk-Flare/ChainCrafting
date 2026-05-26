@@ -63,6 +63,10 @@ namespace ChainCrafting.uiLogic
                 {
                     TooltipFactory.WriteAction(data.postfix, TooltipFactory.stringButton1, TooltipFactory.stringNodeExit);
                 }
+
+                string rawResourcesText = Plugin.Config.OnHoldEnabled || !CraftingInputs.RawResourcesEnabled ? "Show" : "Hide";
+                TooltipFactory.WriteAction(data.postfix, GameInput.FormatButton(CraftingInputs.RawResources), $"{rawResourcesText} Raw Resources");
+
                 string input = "";
                 if (CraftingInputs.CanUpCraft) input += GameInput.FormatButton(CraftingInputs.UpCraft);
                 if (CraftingInputs.CanUpCraft && CraftingInputs.CanDownCraft) input += " / ";
