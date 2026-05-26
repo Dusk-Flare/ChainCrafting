@@ -35,7 +35,7 @@ namespace ChainCrafting.Configs
             {
                 if(GhostCrafterOpen || value == 1 || value != _craftCount)
                 {
-                    if(value >= 1 && value <= CraftingMenu.UpperBound)
+                    if(value >= 1 && value <= Plugin.Config.UpperBound)
                     {
                         _craftCount = value;
                         Plugin.Logger.LogInfo($"Craft count updated to {value}");
@@ -44,7 +44,7 @@ namespace ChainCrafting.Configs
                 }
             }
         }
-        public static bool CanUpCraft { get => CraftCount < CraftingMenu.UpperBound;  }
+        public static bool CanUpCraft { get => CraftCount < Plugin.Config.UpperBound;  }
         public static bool CanDownCraft { get => CraftCount > 1; }
 
         public static void Update()
@@ -53,7 +53,7 @@ namespace ChainCrafting.Configs
 
             if (GameInput.GetButtonDown(CraftingHelper)) OnCrftingHelperOpen?.Invoke();
 
-            if (CraftingMenu.OnHoldEnabled) RawResourcesEnabled = GameInput.GetButtonHeld(RawResources);
+            if (Plugin.Config.OnHoldEnabled) RawResourcesEnabled = GameInput.GetButtonHeld(RawResources);
             else if (GameInput.GetButtonDown(RawResources)) ToggleCrafts();
 
             if (uGUI_Tooltip.visible)

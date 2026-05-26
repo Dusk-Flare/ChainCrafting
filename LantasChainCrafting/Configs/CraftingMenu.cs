@@ -1,17 +1,15 @@
-﻿using Nautilus.Options;
+﻿using Nautilus.Json;
+using Nautilus.Options.Attributes;
 
 namespace ChainCrafting.Configs
 {
-
-    public class CraftingMenu : ModOptions
+    [Menu("Chain Options")]
+    public class CraftingMenu : ConfigFile
     {
-        public static bool OnHoldEnabled = false;
-        public static int UpperBound = 50;
-        public CraftingMenu() : base("Chain Options")
-        {
-            ModToggleOption OnHold = ModToggleOption.Create("OnHold", "Raw Resources On Hold", false, "Enabling this option will switch the \"Raw Resources\" keybind from Toggle to Hold");
-            OnHold.OnChanged += (sender, ToggleOnChange) => OnHoldEnabled = ToggleOnChange.Value;
-            AddItem(OnHold);
-        }
+        [Toggle("Raw Resources On Hold", Tooltip = "Enabling this option will switch the \"Raw Resources\" keybind from Toggle to Hold")]
+        public bool OnHoldEnabled = false;
+
+        [Slider("Max Bulk Craft Amount", 2, 100, Tooltip = "Sets the maximum amount of items that can be crafted in bulk")]
+        public int UpperBound = 48;
     }
 }

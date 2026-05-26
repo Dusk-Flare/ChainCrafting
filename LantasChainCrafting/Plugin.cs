@@ -23,16 +23,16 @@ namespace ChainCrafting
         public static Color availableColor = new(0.58f, 0.87f, 0.0f, 1.0f);
         public static Color craftableColor = new(1.0f, 0.886f, 0.031f, 1.0f);
         public static Color unavailableColor = new(0.87f, 0.25f, 0.15f, 1.0f);
-        public static CraftingMenu Menu { get; private set; }
+        // public static CraftingMenu Menu { get; private set; 
         public static TechType tempType;
         public static PDATab CraftingHelper;
+        internal new static CraftingMenu Config = OptionsPanelHandler.RegisterModOptions<CraftingMenu>();
         private void Awake()
         {
             Logger = base.Logger;
 
 
             Harmony.CreateAndPatchAll(Assembly, $"{PluginInfo.PLUGIN_GUID}");
-            OptionsPanelHandler.RegisterModOptions(Menu = new());
             CraftingHelper = EnumHandler.AddEntry<PDATab>("CraftingHelper");
             CraftingInputs.OnCrftingHelperOpen += () =>
             {
