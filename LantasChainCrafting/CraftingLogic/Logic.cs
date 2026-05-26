@@ -31,12 +31,16 @@ namespace ChainCrafting.CraftingLogic
 
         public static void ChainCraft(TechType resource, int amount, out Stack<Resource> craftStack)
         {
-            craftStack = new Stack<Resource>();
-            CreateStack(resource, amount, ref craftStack);
-            OrganizeCraftStack(ref craftStack);
+            OrganisedStack(resource, amount, out craftStack);
             RemoveOwned(ref craftStack, resource);
         }
 
+        public static void OrganisedStack(TechType resource, int amount, out Stack<Resource> craftStack)
+        {
+            craftStack = new Stack<Resource>();
+            CreateStack(resource, amount, ref craftStack);
+            OrganizeCraftStack(ref craftStack);
+        }
 
         public static void GetRequirements(Resource resource, out Stack<Resource> stack)
         {

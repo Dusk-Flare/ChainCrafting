@@ -17,12 +17,8 @@ namespace ChainCrafting.uiLogic
                 GetCraftingStatus(Resource.ComponentsOf(type).Select(resource => resource with { Amount = resource.Amount * CraftingInputs.CraftCount }).ToList(), new(), icons);
                 return;
             }
-            Stack<Resource> stack = new();
-            ResourceTable table = new();
-            Logic.CreateStack(type, CraftingInputs.CraftCount, ref stack);
-            Logic.OrganizeCraftStack(ref stack);
-            foreach (Resource resource in stack) if (resource.Amount < resource.PickupCount) table.Add(resource);
-            Logic.RemoveOwned(ref stack, type);
+            Logic.OrganisedStack(type, CraftingInputs.CraftCount, out Stack<Resource> stack);
+            Validate.CostOfOwned(type, CraftingInputs.CraftCount, out ResourceTable table);
             Validate.CostOfCraft(stack, out ResourceTable fullCost);
             GetCraftingStatus(fullCost, table, icons);
         }
@@ -35,9 +31,7 @@ namespace ChainCrafting.uiLogic
 
         public static void UpdateIngredients(uGUI_RecipeEntry self, ItemsContainer container, bool ping)
         {
-            Stack<Resource> craftStack = new();
-            Logic.CreateStack(self.techType, CraftingInputs.CraftCount, ref craftStack);
-            Logic.OrganizeCraftStack(ref craftStack);
+            Logic.OrganisedStack(self.techType, CraftingInputs.CraftCount, out Stack<Resource> craftStack);
             Logic.AccountForYields(ref craftStack);
             Validate.CostOfCraft(craftStack, out ResourceTable entryCost);
             List<Resource> resources = entryCost.ToList();

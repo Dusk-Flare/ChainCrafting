@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
-using ChainCrafting.Configs;
+﻿using ChainCrafting.Configs;
 using ChainCrafting.Utils;
+using System.Collections.Generic;
 
 namespace ChainCrafting.CraftingLogic
 {
@@ -27,6 +27,30 @@ namespace ChainCrafting.CraftingLogic
                 {
                     if (ingredient.Craftable) continue;
                     entryCost.Add(ingredient.Type, ingredient.Amount * materialCount);
+                }
+            }
+        }
+
+        public static void CostOfOwned(TechType techType, int count, out ResourceTable entryCost)
+        {
+            entryCost = new();
+            Logic.OrganisedStack(techType, count, out Stack<Resource> craftStack);
+            foreach (Resource resource in craftStack)
+            {
+                int materialCount = resource.Amount;
+                if (resource.Amount <= 0 || resource.PickupCount < resource.Amount) continue;
+                foreach (Resource ingredient in resource.Components)
+                {
+                    TechType type = ingredient.Type;
+                    int amount = ingredient.Amount * materialCount;
+                    if (ingredient.Craftable)
+                    {
+                        Logic.OrganisedStack(type, amount, out Stack<Resource> subStack);
+                        CostOfCraft(subStack, out ResourceTable subCost);
+                        entryCost.AddAll(subCost);
+                        continue;
+                    }
+                    entryCost.Add(type, amount);
                 }
             }
         }

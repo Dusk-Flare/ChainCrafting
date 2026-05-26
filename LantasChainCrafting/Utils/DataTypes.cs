@@ -83,6 +83,12 @@ namespace ChainCrafting.Utils
             Table[type] = amount; 
             return false;
         }
+        public bool AddAll(List<Resource> resources)
+        {
+            bool anyAdded = false;
+            foreach (Resource resource in resources) anyAdded |= Add(resource);
+            return anyAdded;
+        }
         public void Subtract(TechType type, int amount)
         {
             if (Contains(type)) 
@@ -94,6 +100,7 @@ namespace ChainCrafting.Utils
         public void Remove(TechType type) => Table.Remove(type);
         public void Set(Resource resource) => Set(resource.Type, resource.Amount);
         public bool Add(Resource resource) => Add(resource.Type, resource.Amount);
+        public bool AddAll(ResourceTable resourceTable) => AddAll(resourceTable.ToList());
         public void Remove(Resource resource) => Remove(resource.Type);
         public void Subtract(Resource resource) => Subtract(resource.Type, resource.Amount);
         public void Clear() => Table.Clear();

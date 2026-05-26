@@ -33,7 +33,7 @@ namespace ChainCrafting.Configs
             get => _craftCount;
             set
             {
-                if(GhostCrafterOpen || value == 1)
+                if(GhostCrafterOpen || value == 1 || value != _craftCount)
                 {
                     if(value >= 1 && value <= CraftingMenu.UpperBound)
                     {
