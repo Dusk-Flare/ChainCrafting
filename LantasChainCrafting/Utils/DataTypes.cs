@@ -2,9 +2,17 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Text;
 
 namespace ChainCrafting.Utils
 {
+    public static class Resources
+    {
+        public static List<Resource> ListOf(Dictionary<TechType, int> dictionary) => dictionary.Select(keyPair => (Resource)keyPair).ToList();
+        public static List<Resource> ListOf(List<Ingredient> ingredients) => ingredients.Select(ing => (Resource)ing).ToList();
+    }
+
+
     public record Resource(TechType Type, int Amount)
     {
         public Resource(TechType type) : this(type, 1) { }
@@ -17,34 +25,22 @@ namespace ChainCrafting.Utils
         public bool Craftable => CraftTree.IsCraftable(Type);
         public int PickupCount => Inventory.main.GetPickupCount(Type);
         public int Yield => TechData.GetCraftAmount(Type);
-        public List<Resource> Ingredients
+        public List<Resource> Components => ComponentsOf(Type);
+        public float CraftTime => CraftTimeOf(Type);
+
+        public static List<Resource> ComponentsOf(TechType type)
         {
-            get
-            {
-                List<Resource> ingredients = new();
-                if (Type == TechType.None || !CraftTree.IsCraftable(Type)) return ingredients; 
-                ReadOnlyCollection<Ingredient> ingredientArray = TechData.GetIngredients(Type);
-                foreach (Ingredient ingredient in ingredientArray) ingredients.Add(ingredient);
-                return ingredients;
-            }
-        }
-        public float CraftTime
-        {
-            get
-            {
-                TechData.GetCraftTime(Type, out float craftTime);
-                return craftTime;
-            }
+            List<Resource> ingredients = new();
+            if (type == TechType.None || !CraftTree.IsCraftable(type)) return ingredients;
+            ReadOnlyCollection<Ingredient> ingredientArray = TechData.GetIngredients(type);
+            foreach (Ingredient ingredient in ingredientArray) ingredients.Add(ingredient);
+            return ingredients;
         }
 
-        public static List<Resource> ListOf(Dictionary<TechType, int> dictionary)
-        {
-            List<Resource> list = new();
-            foreach (var pair in dictionary) list.Add(pair);
-            return list;
-        }
+        public static float CraftTimeOf(TechType type) => TechData.GetCraftTime(type, out float time) ? time : 0;
+
         public static Resource operator +(Resource resource, int value) => resource with { Amount = resource.Amount + value };
-        public static Resource operator -(Resource resource, int value) => resource with { Amount = resource.Amount - value };
+        public static Resource operator -(Resource resource, int value) => resource with { Amount = Math.Max(0, resource.Amount - value) };
         public static Resource operator *(Resource resource, int value) => resource with { Amount = resource.Amount * value };
 
         public static implicit operator Ingredient(Resource resource) => new(resource.Type, resource.Amount);
@@ -54,19 +50,20 @@ namespace ChainCrafting.Utils
         public override string ToString() => $"{Type}: {Amount}";
     }
 
-    public record ResourceTable(Dictionary<TechType, int> Resources)
+    public record ResourceTable(Dictionary<TechType, int> Table)
     {
         public ResourceTable() : this(new Dictionary<TechType, int>()) { }
-        public bool Contains(TechType type) => Resources.ContainsKey(type);
+        public ResourceTable(List<Resource> resources) : this(resources.ToDictionary(entry => entry.Type, entry => entry.Amount)) { }
+        public bool Contains(TechType type) => Table.ContainsKey(type);
         public bool Contains(Resource resource) => Contains(resource.Type);
-        public Dictionary<TechType, int>.KeyCollection Keys => Resources.Keys;
-        public Dictionary<TechType, int>.ValueCollection Values => Resources.Values;
+        public Dictionary<TechType, int>.KeyCollection Keys => Table.Keys;
+        public Dictionary<TechType, int>.ValueCollection Values => Table.Values;
 
         public Resource this[TechType type] 
         { 
             get 
             {
-                if (Resources.TryGetValue(type, out int amount)) return new(type, amount);
+                if (Table.TryGetValue(type, out int amount)) return new(type, amount);
                 return null;
             }
             set
@@ -74,126 +71,40 @@ namespace ChainCrafting.Utils
                 Set(type, value.Amount);
             }
         }
-        public void Set(TechType type, int ammount) => Resources[type] = ammount;
+        public void Set(TechType type, int ammount) => Table[type] = ammount;
 
         public bool Add(TechType type, int amount)
         {
             if (Contains(type)) 
             { 
-                Resources[type] += amount; 
+                Table[type] += amount; 
                 return true;
             }
-            Resources[type] = amount; 
+            Table[type] = amount; 
             return false;
         }
-        public void Remove(TechType type) => Resources.Remove(type);
-        public void Remove(TechType type, int amount)
+        public void Subtract(TechType type, int amount)
         {
             if (Contains(type)) 
             {
-                Resources[type] -= amount;
-                if (Resources[type] <= 0) Remove(type);
+                Table[type] -= amount;
+                if (Table[type] <= 0) Remove(type);
             }
         }
+        public void Remove(TechType type) => Table.Remove(type);
         public void Set(Resource resource) => Set(resource.Type, resource.Amount);
         public bool Add(Resource resource) => Add(resource.Type, resource.Amount);
-        public void Remove(Resource resource) => Remove(resource.Type, resource.Amount);
-        public void Clear() => Resources.Clear();
-        public Dictionary<TechType, int>.Enumerator GetEnumerator() => Resources.GetEnumerator();
-        public List<Resource> ToList() => Resources.Select(entry => new Resource(entry)).ToList();
+        public void Remove(Resource resource) => Remove(resource.Type);
+        public void Subtract(Resource resource) => Subtract(resource.Type, resource.Amount);
+        public void Clear() => Table.Clear();
+        public List<Resource> ToList() => ToList(this);
+        public Dictionary<TechType, int>.Enumerator GetEnumerator() => Table.GetEnumerator();
+
+        public static List<Resource> ToList(ResourceTable resourceTable) => Resources.ListOf(resourceTable.Table);
+        public static implicit operator List<Resource>(ResourceTable resources) => resources.Table.Select(entry => new Resource(entry)).ToList();
+        public static implicit operator ResourceTable(List<Resource> resources) => new(resources);
         public static implicit operator ResourceTable(Dictionary<TechType, int> resources) => new(resources);
     }
-
-    /*public record ResourceTree(Resource Resource, List<ResourceTree> Children) : IEnumerable<ResourceTree>, IEnumerable
-    {
-        public ResourceTree(TechType type, int amount) : this(new Resource(type, amount), new List<ResourceTree>()) { }
-        public ResourceTree(TechType type) : this(type, 1) { }
-
-        public static implicit operator ResourceTree(uGUI_CraftingMenu.Node node)
-        {
-            Resource resource = node;
-            List<ResourceTree> children = new();
-            foreach (uGUI_CraftingMenu.Node child in node) children.Add(child);
-            return new ResourceTree(resource, children);
-        }
-
-        public void AddChild(ResourceTree child) => Children.Add(child);
-
-        public IEnumerator<ResourceTree> GetEnumerator()
-        {
-            for (int i = 0; i < this.Children.Count; i++) yield return this.Children[i];
-            yield break;
-        }
-
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-    }
-
-    public class _ResourceTree 
-    {
-        public Resource Root;
-        public List<_ResourceTree> Children;
-        public int Depth;
-        public Dictionary<int, List<Resource>> Layers
-        {
-            get
-            {
-                Dictionary<int, List<Resource>> dict = new();
-                Queue<_ResourceTree> queue = new();
-                queue.Enqueue(this);
-                dict[0].Add(Root);
-                while (queue.Count > 0)
-                {
-                    _ResourceTree node = queue.Dequeue();
-                    foreach (_ResourceTree child in node.Children)
-                    {
-                        dict[Depth - child.Depth].Add(child.Root);
-                        queue.Enqueue(child);
-                    }
-                }
-                return dict;
-            }
-        }
-
-        public _ResourceTree(Resource Root) 
-        {
-            this.Root = Root;
-            (Children, Depth) = Populate(Root, 0);
-            Padd(this, 0, Depth);
-        }
-
-        private void AddChild(_ResourceTree node)
-        {
-            Children.Add(node);
-            Depth += node.Depth;
-        }
-
-        private void AddChild(Resource resource)
-        {
-            AddChild(new _ResourceTree(resource));
-        }
-
-        private static (List<_ResourceTree>, int) Populate(Resource Node, int Depth)
-        {
-            List<_ResourceTree> children = new();
-            foreach(Resource item in Node.Ingredients)
-            {
-                (List<_ResourceTree> babies, int newDepth) = Populate(item, Depth + 1);
-                children.AddRange(babies);
-                Depth = Math.Max(Depth, newDepth);
-            }
-            return (children,  Depth);
-        }
-
-        private static void Padd(_ResourceTree current, int depth, int maxDepth)
-        {
-            if (current.Children.Count == 0 && depth < maxDepth)
-            {
-                current.Children = new List<_ResourceTree>();
-                current.AddChild(new Resource(TechType.None));
-            }
-            foreach(_ResourceTree item in current.Children) Padd(current, depth++, maxDepth);
-        }
-    }*/
 
     public class ResourceTree
     {
@@ -208,20 +119,20 @@ namespace ChainCrafting.Utils
             Data = data ?? new(TechType.None);
             Root = GetRoot();
             this.layer = layer;
-            foreach (Resource child in data.Ingredients) AddChild(child);
+            foreach (Resource child in data.Components) AddChild(child);
             if (Root == this) Padd(Root, Root.layer, Depth(Root));
         }
 
         public int GetOuterRing() 
         {
-            return GetLayer(Root, Depth(Root));
+            return GetLayerCount(Root, Depth(Root));
         }
 
-        private static int GetLayer(ResourceTree node, int target)
+        private static int GetLayerCount(ResourceTree node, int target)
         {
             if (node.layer == target) return 1;
             int sum = 0;
-            foreach (ResourceTree child in node.children) sum += GetLayer(child, target);
+            foreach (ResourceTree child in node.children) sum += GetLayerCount(child, target);
             return sum;
         }
 

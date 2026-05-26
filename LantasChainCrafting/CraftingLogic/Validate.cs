@@ -1,20 +1,18 @@
 ﻿using System.Collections.Generic;
+using ChainCrafting.Configs;
 using ChainCrafting.Utils;
 
 namespace ChainCrafting.CraftingLogic
 {
     internal class Validate
     {
-        public static void IsFuffiled(TechType techType, out bool alreadyPassed)
+        public static bool IsFulfilled(TechType techType, int count = 1)
         {
-            if (!GameModeUtils.RequiresIngredients())
-            {
-                alreadyPassed = true;
-                return;
-            }
-            Logic.ChainCraft(techType, out Stack<Resource> craftStack);
+            if (!GameModeUtils.RequiresIngredients()) return true;
+            Logic.ChainCraft(techType, count, out Stack<Resource> craftStack);
             CostOfCraft(craftStack, out ResourceTable entryCost);
-            ValidateCraft(entryCost, out alreadyPassed);
+            bool fuffiled = ValidateCraft(entryCost);
+            return fuffiled;
         }
 
         public static void CostOfCraft(Stack<Resource> craftStack, out ResourceTable entryCost)
@@ -25,7 +23,7 @@ namespace ChainCrafting.CraftingLogic
                 int materialCount = resource.Amount;
                 if (resource.Amount <= 0) continue;
 
-                foreach (Resource ingredient in resource.Ingredients)
+                foreach (Resource ingredient in resource.Components)
                 {
                     if (ingredient.Craftable) continue;
                     entryCost.Add(ingredient.Type, ingredient.Amount * materialCount);
@@ -33,32 +31,13 @@ namespace ChainCrafting.CraftingLogic
             }
         }
 
-        public static bool IsInCraftingTree(TechType techType, CraftTree.Type craftingTree)
-        {
-            if (craftingTree is CraftTree.Type.None) return false;
-            CraftTree tree = CraftTree.GetTree(craftingTree);
-            CraftNode node = tree.nodes;
-            HashSet<TechType> recipies = new();
-            IEnumerator<CraftNode> enumerator = node.Traverse();
-            while (enumerator.MoveNext())
-            {
-                recipies.Add(enumerator.Current.techType0);
-            }
-            return recipies.Contains(techType);
-        }
-
-        private static void ValidateCraft(ResourceTable entryCost, out bool valid)
+        private static bool ValidateCraft(ResourceTable entryCost)
         {
             foreach (Resource material in entryCost)
             {
-                if (material.Amount > material.PickupCount)
-                {
-                    valid = false;
-                    return;
-                }
+                if (material.Amount > material.PickupCount) return false;
             }
-            valid = true;
-            return;
+            return true;
         }
     }
 }

@@ -1,27 +1,12 @@
-﻿using HarmonyLib;
+﻿using ChainCrafting.Configs;
+using ChainCrafting.uiLogic;
+using HarmonyLib;
 
 namespace ChainCrafting.CraftingLogic
 {
     [HarmonyPatch]
     public static class CraftHooks
     {
-        [HarmonyPatch(typeof(CrafterLogic))]
-        [HarmonyPatch(nameof(CrafterLogic.IsCraftRecipeFulfilled))]
-        [HarmonyPostfix]
-        public static void IsCraftRecipeFulfilled(TechType techType, ref bool __result)
-        {
-            Validate.IsFuffiled(techType, out bool alreadyPassed);
-            __result = alreadyPassed;
-        }
-
-        [HarmonyPatch(typeof(CrafterLogic))]
-        [HarmonyPatch(nameof(CrafterLogic.ConsumeResources))]
-        [HarmonyPostfix]
-        public static void ConsumeResources(ref bool __result)
-        {
-            __result = true;
-        }
-
         [HarmonyPatch(typeof(GhostCrafter))]
         [HarmonyPatch(nameof(GhostCrafter.Craft))]
         [HarmonyPrefix]
@@ -29,7 +14,17 @@ namespace ChainCrafting.CraftingLogic
         {
             if (!GameModeUtils.RequiresIngredients()) return true;
             __instance.StartCoroutine(Logic.Craft(__instance, techType));
+            CraftingInputs.CraftCount = 1;
             return false;
+        }
+
+        [HarmonyPatch(typeof(uGUI_CraftingMenu))]
+        [HarmonyPatch(nameof(uGUI_CraftingMenu.ActionAvailable))]
+        [HarmonyPostfix]
+        private static void ActionAvailable(uGUI_CraftingMenu __instance, uGUI_CraftingMenu.Node sender, ref bool __result)
+        {
+            Plugin.Logger.LogInfo($"Checking if aclient is GhostCrafter: {__instance.client is GhostCrafter}, TechType: {sender.techType}, Available: {__result}, Result: {CraftingUI.ActionAvailable(sender)}");
+            if (__instance.client is GhostCrafter) __result = CraftingUI.ActionAvailable(sender);
         }
     }
 }

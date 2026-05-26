@@ -54,9 +54,9 @@ namespace ChainCrafting
                     pda.Open(CraftingHelper);
                 }
             };
-            CraftingInputs.OnMissingCraftUpdate += () =>
+            CraftingInputs.OnRawResourcesUpdate += () =>
             {
-                Logger.LogInfo($"Missing Craft: {CraftingInputs.MissingCraft}");
+                Logger.LogInfo($"Missing Craft: {CraftingInputs.RawResourcesEnabled}");
             };
             Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
         }

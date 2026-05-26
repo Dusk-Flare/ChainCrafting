@@ -1,4 +1,5 @@
 ﻿using ChainCrafting.Configs;
+using ChainCrafting.CraftingLogic;
 using HarmonyLib;
 using Nautilus.Handlers;
 using System.Collections.Generic;
@@ -11,11 +12,11 @@ namespace ChainCrafting.uiLogic
     internal class uiHooks
     {
         [HarmonyPatch(typeof(TooltipFactory))]
-        [HarmonyPatch(nameof(TooltipFactory.WriteIngredients))]
+        [HarmonyPatch(nameof(TooltipFactory.CraftRecipe))]
         [HarmonyPrefix]
-        private static bool WriteIngredients(IList<Ingredient> ingredients, List<TooltipIcon> icons)
+        private static bool CraftRecipe(TechType techType, bool locked, TooltipData data)
         {
-            CraftingUI.ConditionalCraftingStatus(ingredients, icons, CraftingInputs.MissingCraft);
+            uiBaseMethods.CraftRecipe(techType, locked, data);
             return false;
         }
 
@@ -24,7 +25,7 @@ namespace ChainCrafting.uiLogic
         [HarmonyPrefix]
         private static bool UpdateIngredients(uGUI_RecipeEntry __instance, ItemsContainer container, bool ping)
         {
-            CraftingUI.ConditionalUpdateIngredients(__instance, container, ping, CraftingInputs.MissingCraft);
+            CraftingUI.ConditionalUpdateIngredients(__instance, container, ping, CraftingInputs.RawResourcesEnabled);
             return false;
         }
 
@@ -33,7 +34,7 @@ namespace ChainCrafting.uiLogic
         [HarmonyPostfix]
         private static void Initialize(uGUI_PinnedRecipes __instance)
         {
-            CraftingInputs.OnMissingCraftUpdate += () => __instance.ingredientsDirty = true;
+            CraftingInputs.OnRawResourcesUpdate += () => __instance.ingredientsDirty = true;
         }
 
         [HarmonyPatch(typeof(uGUI_PinnedRecipes))]
@@ -41,7 +42,7 @@ namespace ChainCrafting.uiLogic
         [HarmonyPostfix]
         private static void Deinitialize(uGUI_PinnedRecipes __instance)
         {
-            CraftingInputs.OnMissingCraftUpdate -= () => __instance.ingredientsDirty = true;
+            CraftingInputs.OnRawResourcesUpdate -= () => __instance.ingredientsDirty = true;
         }
 
         [HarmonyPatch(typeof(uGUI_BlueprintsTab))]
@@ -73,7 +74,7 @@ namespace ChainCrafting.uiLogic
         [HarmonyPatch(typeof(uGUI_PDA))]
         [HarmonyPatch(nameof(uGUI_PDA.Initialize))]
         [HarmonyPostfix]
-        private static void Initialize_Postfix(uGUI_PDA __instance)
+        private static void PDAInitialize(uGUI_PDA __instance)
         {
             GameObject craftTab = GameObject.Instantiate(__instance.tabLog.gameObject, __instance.transform.Find("Content"));
             craftTab.name = "Crafting Helper";
@@ -81,6 +82,26 @@ namespace ChainCrafting.uiLogic
             craftTab.AddComponent<uGUI_CraftingHelper>();
 
             __instance.tabs.Add(Plugin.CraftingHelper, craftTab.GetComponent<uGUI_PDATab>());
+        }
+
+        [HarmonyPatch(typeof(uGUI_CraftingMenu))]
+        [HarmonyPatch(nameof(uGUI_CraftingMenu.Open))]
+        [HarmonyPostfix]
+        private static void Open(uGUI_CraftingMenu __instance)
+        {
+            CraftingInputs.OnCraftCountUpdate += () => __instance.isDirty = true;
+            bool open = __instance.client is GhostCrafter;
+            CraftingInputs.GhostCrafterOpen = open;
+            if(!open) CraftingInputs.CraftCount = 1;
+        }
+
+        [HarmonyPatch(typeof(uGUI_CraftingMenu))]
+        [HarmonyPatch(nameof(uGUI_CraftingMenu.Close))]
+        [HarmonyPostfix]
+        private static void Close(uGUI_CraftingMenu __instance)
+        {
+            CraftingInputs.OnCraftCountUpdate -= () => __instance.isDirty = true;
+            CraftingInputs.GhostCrafterOpen = false;
         }
     }
 }

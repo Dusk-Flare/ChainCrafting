@@ -1,7 +1,7 @@
-﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
+﻿using ChainCrafting.Configs;
 using ChainCrafting.CraftingLogic;
 using ChainCrafting.Utils;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
@@ -10,37 +10,35 @@ namespace ChainCrafting.uiLogic
 {
     public static class CraftingUI
     {
-        public static void ConditionalCraftingStatus(IList<Ingredient> ingredients, List<TooltipIcon> icons, bool displayMissing)
+        public static void ConditionalCraftingStatus(TechType type, List<TooltipIcon> icons, bool displayMissing)
         {
             if (!displayMissing)
             {
-                GetCraftingStatus(ingredients, icons);
+                GetCraftingStatus(Resource.ComponentsOf(type).Select(resource => resource with { Amount = resource.Amount * CraftingInputs.CraftCount }).ToList(), new(), icons);
                 return;
             }
             Stack<Resource> stack = new();
-            foreach (Resource ingredient in ingredients)
-            {
-                TechType techType = ingredient.Type;
-                Logic.CreateStack(techType, ingredient.Amount, ref stack);
-            }
+            ResourceTable table = new();
+            Logic.CreateStack(type, CraftingInputs.CraftCount, ref stack);
             Logic.OrganizeCraftStack(ref stack);
+            foreach (Resource resource in stack) if (resource.Amount < resource.PickupCount) table.Add(resource);
+            Logic.RemoveOwned(ref stack, type);
             Validate.CostOfCraft(stack, out ResourceTable fullCost);
-            IngredientList(fullCost, out IList<Ingredient> ingredientsList);
-            foreach (Resource ingredient in ingredients) if (!ingredient.Craftable) ingredientsList.Add(ingredient);
-            GetCraftingStatus(ingredientsList, icons);
+            GetCraftingStatus(fullCost, table, icons);
         }
 
         public static void ConditionalUpdateIngredients(uGUI_RecipeEntry self, ItemsContainer container, bool ping, bool displayMissing)
         {
-            if (!displayMissing) BaseUpdateIngredients(self, container, ping);
+            if (!displayMissing) uiBaseMethods.BaseUpdateIngredients(self, container, ping);
             else UpdateIngredients(self, container, ping);
         }
 
         public static void UpdateIngredients(uGUI_RecipeEntry self, ItemsContainer container, bool ping)
         {
             Stack<Resource> craftStack = new();
-            Logic.CreateStack(self.techType, 1, ref craftStack);
+            Logic.CreateStack(self.techType, CraftingInputs.CraftCount, ref craftStack);
             Logic.OrganizeCraftStack(ref craftStack);
+            Logic.AccountForYields(ref craftStack);
             Validate.CostOfCraft(craftStack, out ResourceTable entryCost);
             List<Resource> resources = entryCost.ToList();
             if (entryCost != null && entryCost.Contains(self.techType)) entryCost.Remove(self.techType);
@@ -65,7 +63,7 @@ namespace ChainCrafting.uiLogic
             {
                 Resource item = resources[i];
                 TechType techType = item.Type;
-                Validate.IsFuffiled(techType, out bool isCraftable);
+                bool isCraftable = Validate.IsFulfilled(techType, CraftingInputs.CraftCount);
                 int count = container.GetCount(techType);
                 int amount = item.Amount;
                 uGUI_RecipeItem uGUI_RecipeItem2 = self.items[i];
@@ -103,73 +101,7 @@ namespace ChainCrafting.uiLogic
             }
         }
 
-        public static void BaseUpdateIngredients(uGUI_RecipeEntry self, ItemsContainer container, bool ping)
-        {
-            ReadOnlyCollection<Ingredient> ingredients = TechData.GetIngredients(self.techType);
-            int craftAmount = TechData.GetCraftAmount(self.techType);
-            int num = -1;
-            int num2 = (ingredients != null) ? ingredients.Count : 0;
-            while (self.items.Count < num2)
-            {
-                uGUI_RecipeItem uGUI_RecipeItem = self.pool.Get();
-                uGUI_RecipeItem.Initialize();
-                self.items.Add(uGUI_RecipeItem);
-            }
-            while (self.items.Count > num2)
-            {
-                int index = self.items.Count - 1;
-                uGUI_RecipeItem entry = self.items[index];
-                self.items.RemoveAt(index);
-                self.pool.Release(entry);
-            }
-            for (int i = 0; i < num2; i++)
-            {
-                Resource ingredient = ingredients[i];
-                TechType techType = ingredient.Type;
-                Validate.IsFuffiled(techType, out bool hasResources);
-                int count = container.GetCount(techType);
-                int amount = ingredient.Amount;
-                int num3 = count / amount;
-                if (num < 0 || num3 < num)
-                {
-                    num = num3;
-                }
-                uGUI_RecipeItem uGUI_RecipeItem2 = self.items[i];
-                bool defaultCheck = count >= amount || !GameModeUtils.RequiresIngredients();
-                if (defaultCheck)
-                {
-                    uGUI_RecipeItem2.text.color = Plugin.availableColor;
-                }
-                else if (hasResources && ingredient.Craftable)
-                {
-                    uGUI_RecipeItem2.text.color = Plugin.craftableColor;
-                }
-                else
-                {
-                    uGUI_RecipeItem2.text.color = Plugin.unavailableColor;
-                }
-
-                uGUI_RecipeItem2.Set(techType, count, amount, ping);
-            }
-            self.background.SetActive(num2 > 0);
-            num *= craftAmount;
-            if (num > 0)
-            {
-                if (self.min != num)
-                {
-                    self.min = num;
-                    self.text.text = string.Format("x{0}", IntStringCache.GetStringForInt(self.min));
-                    return;
-                }
-            }
-            else
-            {
-                self.min = int.MinValue;
-                self.text.text = string.Empty;
-            }
-        }
-
-        public static void GetCraftingStatus(IList<Ingredient> ingredients, List<TooltipIcon> icons)
+        public static void GetCraftingStatus(List<Resource> ingredients, ResourceTable owned, List<TooltipIcon> icons)
         {
             if (ingredients == null)
             {
@@ -181,17 +113,13 @@ namespace ChainCrafting.uiLogic
             for (int i = 0; i < count; i++)
             {
                 stringBuilder.Length = 0;
-                Ingredient ingredient = ingredients[i];
-                TechType techType = ingredient.techType;
-                int pickupCount = main.GetPickupCount(techType);
-                int amount = ingredient.amount;
+                Resource ingredient = ingredients[i];
+                TechType techType = ingredient.Type;
+                int pickupCount = main.GetPickupCount(techType) + (owned.Contains(techType) ? owned[techType].Amount : 0);
+                int amount = ingredient.Amount;
                 bool flag = pickupCount >= amount || !GameModeUtils.RequiresIngredients();
                 bool hasIngredients = false;
-                if (CraftTree.IsCraftable(techType))
-                {
-                    Validate.IsFuffiled(techType, out bool isCraftable);
-                    hasIngredients = isCraftable;
-                }
+                if (ingredient.Craftable) hasIngredients = Validate.IsFulfilled(techType, CraftingInputs.CraftCount);
                 Sprite sprite = SpriteManager.Get(techType);
                 if (flag)
                 {
@@ -223,22 +151,10 @@ namespace ChainCrafting.uiLogic
             }
         }
 
-        public static void IngredientList(ResourceTable ingredients, out IList<Ingredient> ingredientsList)
+        public static bool ActionAvailable(uGUI_CraftingMenu.Node sender)
         {
-            ingredientsList = new List<Ingredient>();
-            foreach (Resource material in ingredients) ingredientsList.Add(material);
-        }
-
-        public static void IconsFromList(IList<Ingredient> ingredients, out List<TooltipIcon> icons)
-        {
-            icons = new List<TooltipIcon>();
-            foreach (Ingredient ingredient in ingredients)
-            {
-                TechType techType = ingredient.techType;
-                Sprite sprite = SpriteManager.Get(techType);
-                string orFallback = Language.main.GetOrFallback(TooltipFactory.techTypeIngredientStrings.Get(techType), techType);
-                icons.Add(new TooltipIcon(sprite, orFallback));
-            }
+            TreeAction action = sender.action;
+            return action == TreeAction.Expand || (action == TreeAction.Craft && CrafterLogic.IsCraftRecipeUnlocked(sender.techType) && Validate.IsFulfilled(sender.techType, CraftingInputs.CraftCount));
         }
     }
 }
