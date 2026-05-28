@@ -1,0 +1,10 @@
+{
+  "OptionChain_RawResources_Bind": "Raw Resources",
+  "OptionDesc_Chain_RawResources_Bind": "Toggles the display of base ingredients in the crafting menu and pinned recipes",
+  "OptionChain_CraftingHelper_Bind": "Crafting Helper",
+  "OptionDesc_Chain_CraftingHelper_Bind": "Opens the crafting helper menu on your PDA",
+  "OptionChain_UpCraft_Bind": "Increase Craft",
+  "OptionDesc_Chain_UpCraft_Bind": "Increases the amount of bulk crafted items",
+  "OptionChain_DownCraft_Bind": "Lower Craft",
+  "OptionDesc_Chain_DownCraft_Bind": "Lowers the amount of bulk crafted items"
+}

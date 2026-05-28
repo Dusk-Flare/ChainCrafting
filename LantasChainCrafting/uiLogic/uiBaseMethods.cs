@@ -37,7 +37,7 @@ namespace ChainCrafting.uiLogic
             int craftAmount = TechData.GetCraftAmount(techType) * CraftingInputs.CraftCount;
             if (craftAmount > 1)
             {
-                text = Language.main.GetFormat<string, int>("CraftMultipleFormat", text, craftAmount);
+                text = Language.main.GetFormat("CraftMultipleFormat", text, craftAmount);
             }
             TooltipFactory.WriteTitle(data.prefix, text);
             TooltipFactory.WriteDescription(data.prefix, Language.main.Get(TooltipFactory.techTypeTooltipStrings.Get(techType)));

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using Resources = ChainCrafting.Utils.Resources;
 
 namespace ChainCrafting.uiLogic
 {
@@ -14,7 +15,7 @@ namespace ChainCrafting.uiLogic
         {
             if (!displayMissing)
             {
-                GetCraftingStatus(Resource.ComponentsOf(type).Select(resource => resource with { Amount = resource.Amount * CraftingInputs.CraftCount }).ToList(), new(), icons);
+                GetCraftingStatus(Resources.ComponentsOf(type).Select(resource => resource with { Amount = resource.Amount * CraftingInputs.CraftCount }).ToList(), new(), icons);
                 return;
             }
             Logic.OrganisedStack(type, CraftingInputs.CraftCount, out Stack<Resource> stack);
@@ -26,18 +27,19 @@ namespace ChainCrafting.uiLogic
         public static void ConditionalUpdateIngredients(uGUI_RecipeEntry self, ItemsContainer container, bool ping, bool displayMissing)
         {
             if (!displayMissing) uiBaseMethods.BaseUpdateIngredients(self, container, ping);
-            else UpdateIngredients(self, container, ping);
+            else UpdateIngredients(self, ping);
         }
 
-        public static void UpdateIngredients(uGUI_RecipeEntry self, ItemsContainer container, bool ping)
+        public static void UpdateIngredients(uGUI_RecipeEntry self, bool ping)
         {
             Logic.OrganisedStack(self.techType, CraftingInputs.CraftCount, out Stack<Resource> craftStack);
             Logic.AccountForYields(ref craftStack);
             Validate.CostOfCraft(craftStack, out ResourceTable entryCost);
             List<Resource> resources = entryCost.ToList();
+
             if (entryCost != null && entryCost.Contains(self.techType)) entryCost.Remove(self.techType);
             int negative = -1;
-            int yield = TechData.GetCraftAmount(self.techType);
+            int yield = Resources.Yield(self.techType);
             int totalCraftAmount = resources != null ? resources.Count() : 0;
 
             while (self.items.Count < totalCraftAmount)
@@ -57,8 +59,8 @@ namespace ChainCrafting.uiLogic
             {
                 Resource item = resources[i];
                 TechType techType = item.Type;
-                bool isCraftable = Validate.IsFulfilled(techType, CraftingInputs.CraftCount);
-                int count = container.GetCount(techType);
+                bool canCraft = Validate.IsFulfilled(techType, CraftingInputs.CraftCount);
+                int count = Resources.PickupCount(techType);
                 int amount = item.Amount;
                 uGUI_RecipeItem uGUI_RecipeItem2 = self.items[i];
                 bool defaultCheck = count >= amount || !GameModeUtils.RequiresIngredients();
@@ -66,7 +68,7 @@ namespace ChainCrafting.uiLogic
                 {
                     uGUI_RecipeItem2.text.color = Plugin.availableColor;
                 }
-                else if (isCraftable && item.Craftable)
+                else if (canCraft && item.Craftable)
                 {
                     uGUI_RecipeItem2.text.color = Plugin.craftableColor;
                 }

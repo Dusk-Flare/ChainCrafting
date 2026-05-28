@@ -13,6 +13,7 @@ namespace ChainCrafting.CraftingLogic
         public static IEnumerator Craft(GhostCrafter crafter, TechType techType)
         {
             ChainCraft(techType, CraftingInputs.CraftCount, out Stack<Resource> craftStack);
+            CraftingInputs.CraftCount = 1;
             while (craftStack.Any())
             {
                 Resource item = craftStack.Pop();
@@ -130,7 +131,6 @@ namespace ChainCrafting.CraftingLogic
             while (tempStack.Any())
             {
                 TechType item = tempStack.Pop().Type;
-                Plugin.Logger.LogInfo(catalog[item]);
                 craftStack.Push(catalog[item]);
             }
         }

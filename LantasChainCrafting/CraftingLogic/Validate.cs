@@ -1,5 +1,6 @@
 ﻿using ChainCrafting.Configs;
 using ChainCrafting.Utils;
+using System;
 using System.Collections.Generic;
 
 namespace ChainCrafting.CraftingLogic
@@ -9,6 +10,7 @@ namespace ChainCrafting.CraftingLogic
         public static bool IsFulfilled(TechType techType, int count = 1)
         {
             if (!GameModeUtils.RequiresIngredients()) return true;
+            if(!Resources.Craftable(techType)) return false;
             Logic.ChainCraft(techType, count, out Stack<Resource> craftStack);
             CostOfCraft(craftStack, out ResourceTable entryCost);
             bool fuffiled = ValidateCraft(entryCost);
@@ -21,12 +23,13 @@ namespace ChainCrafting.CraftingLogic
             foreach (Resource resource in craftStack)
             {
                 int materialCount = resource.Amount;
+                int materialYield = resource.Yield;
                 if (resource.Amount <= 0) continue;
 
                 foreach (Resource ingredient in resource.Components)
                 {
                     if (ingredient.Craftable) continue;
-                    entryCost.Add(ingredient.Type, ingredient.Amount * materialCount);
+                    entryCost.Add(ingredient.Type, ingredient.Amount * materialCount / Math.Max(1, materialYield));
                 }
             }
         }
@@ -38,11 +41,12 @@ namespace ChainCrafting.CraftingLogic
             foreach (Resource resource in craftStack)
             {
                 int materialCount = resource.Amount;
+                int materialYield = resource.Yield;
                 if (resource.Amount <= 0 || resource.PickupCount < resource.Amount) continue;
                 foreach (Resource ingredient in resource.Components)
                 {
                     TechType type = ingredient.Type;
-                    int amount = ingredient.Amount * materialCount;
+                    int amount = (int) Math.Ceiling((decimal)ingredient.Amount * materialCount / Math.Max(1, materialYield));
                     if (ingredient.Craftable)
                     {
                         Logic.OrganisedStack(type, amount, out Stack<Resource> subStack);

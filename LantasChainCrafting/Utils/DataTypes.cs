@@ -8,8 +8,22 @@ namespace ChainCrafting.Utils
 {
     public static class Resources
     {
+        public static bool Craftable(TechType type) => CraftTree.IsCraftable(type);
+        public static int PickupCount(TechType type) => Inventory.main.GetPickupCount(type);
+        public static int Yield(TechType type) => TechData.GetCraftAmount(type);
+        public static float CraftTime(TechType type) => TechData.GetCraftTime(type, out float time) ? time : 0;
+
         public static List<Resource> ListOf(Dictionary<TechType, int> dictionary) => dictionary.Select(keyPair => (Resource)keyPair).ToList();
         public static List<Resource> ListOf(List<Ingredient> ingredients) => ingredients.Select(ing => (Resource)ing).ToList();
+
+        public static List<Resource> ComponentsOf(TechType type)
+        {
+            List<Resource> ingredients = new();
+            if (type == TechType.None || !CraftTree.IsCraftable(type)) return ingredients;
+            ReadOnlyCollection<Ingredient> ingredientArray = TechData.GetIngredients(type);
+            foreach (Ingredient ingredient in ingredientArray) ingredients.Add(ingredient);
+            return ingredients;
+        }
     }
 
 
@@ -22,26 +36,16 @@ namespace ChainCrafting.Utils
         public Resource(uGUI_CraftingMenu.Node node) : this(node.techType, 1) { }
 
 
-        public bool Craftable => CraftTree.IsCraftable(Type);
-        public int PickupCount => Inventory.main.GetPickupCount(Type);
-        public int Yield => TechData.GetCraftAmount(Type);
-        public List<Resource> Components => ComponentsOf(Type);
-        public float CraftTime => CraftTimeOf(Type);
-
-        public static List<Resource> ComponentsOf(TechType type)
-        {
-            List<Resource> ingredients = new();
-            if (type == TechType.None || !CraftTree.IsCraftable(type)) return ingredients;
-            ReadOnlyCollection<Ingredient> ingredientArray = TechData.GetIngredients(type);
-            foreach (Ingredient ingredient in ingredientArray) ingredients.Add(ingredient);
-            return ingredients;
-        }
-
-        public static float CraftTimeOf(TechType type) => TechData.GetCraftTime(type, out float time) ? time : 0;
+        public bool Craftable => Resources.Craftable(Type);
+        public int PickupCount => Resources.PickupCount(Type);
+        public int Yield => Resources.Yield(Type);
+        public List<Resource> Components => Resources.ComponentsOf(Type);
+        public float CraftTime => Resources.CraftTime(Type);
 
         public static Resource operator +(Resource resource, int value) => resource with { Amount = resource.Amount + value };
         public static Resource operator -(Resource resource, int value) => resource with { Amount = Math.Max(0, resource.Amount - value) };
         public static Resource operator *(Resource resource, int value) => resource with { Amount = resource.Amount * value };
+        public static Resource operator /(Resource resource, int value) => resource with { Amount = resource.Amount / Math.Max(1, value) };
 
         public static implicit operator Ingredient(Resource resource) => new(resource.Type, resource.Amount);
         public static implicit operator Resource(uGUI_CraftingMenu.Node node) => new(node);
