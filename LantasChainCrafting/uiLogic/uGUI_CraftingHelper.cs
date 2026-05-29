@@ -53,8 +53,8 @@ namespace ChainCrafting.uiLogic
         public void Start()
         {
             GameObject label = transform.Find("Content/LogLabel").gameObject;
-            label.name = "Crafting Helper";
-            label.GetComponent<TextMeshProUGUI>().text = "Crafting Helper";
+            label.name = Language.main.Get("TabCraftingHelper");
+            label.GetComponent<TextMeshProUGUI>().text = Language.main.Get("TabCraftingHelper");
 
             CreateIcon(new(10, 10), TechType.Welder);
         }

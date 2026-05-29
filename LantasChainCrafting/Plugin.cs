@@ -32,7 +32,6 @@ namespace ChainCrafting
             Logger = base.Logger;
             Logger.LogInfo("Loading Localization!");
             LanguageHandler.RegisterLocalizationFolder();
-            Logger.LogInfo($"Localization loaded, testing \"OptionChain_RawResources_Bind\" = {Language.main.Get("OptionChain_RawResources_Bind")}!");
             
             
             Logger.LogInfo("Applying Harmony patches!");

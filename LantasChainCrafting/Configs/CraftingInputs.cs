@@ -63,28 +63,28 @@ namespace ChainCrafting.Configs
             else CraftCount = 1;
         }
 
-        public static GameInput.Button RawResources = EnumHandler.AddEntry<GameInput.Button>("Chain_RawResources_Bind")
+        public static GameInput.Button RawResources = EnumHandler.AddEntry<GameInput.Button>("RawResources_Bind")
             .CreateInput()
             .WithKeyboardBinding(GameInputHandler.Paths.Keyboard.C)
             .WithControllerBinding(GameInputHandler.Paths.Gamepad.DpadLeft)
             .AvoidConflicts(GameInput.Device.Keyboard)
             .WithCategory(PluginInfo.PLUGIN_NAME);
 
-        public static GameInput.Button CraftingHelper = EnumHandler.AddEntry<GameInput.Button>("Chain_CraftingHelper_Bind")
+        public static GameInput.Button CraftingHelper = EnumHandler.AddEntry<GameInput.Button>("CraftingHelper_Bind")
             .CreateInput()
             .WithKeyboardBinding(GameInputHandler.Paths.Mouse.MiddleButton)
             .WithControllerBinding(GameInputHandler.Paths.Gamepad.RightStick)
             .AvoidConflicts(GameInput.Device.Keyboard)
             .WithCategory(PluginInfo.PLUGIN_NAME);
 
-        public static GameInput.Button UpCraft = EnumHandler.AddEntry<GameInput.Button>("Chain_UpCraft_Bind")
+        public static GameInput.Button UpCraft = EnumHandler.AddEntry<GameInput.Button>("UpCraft_Bind")
             .CreateInput()
             .WithKeyboardBinding(GameInputHandler.Paths.Mouse.ScrollUp)
             .WithControllerBinding(GameInputHandler.Paths.Gamepad.DpadUp)
             .AvoidConflicts(GameInput.Device.Keyboard)
             .WithCategory(PluginInfo.PLUGIN_NAME);
 
-        public static GameInput.Button DownCraft = EnumHandler.AddEntry<GameInput.Button>("Chain_DownCraft_Bind")
+        public static GameInput.Button DownCraft = EnumHandler.AddEntry<GameInput.Button>("DownCraft_Bind")
             .CreateInput()
             .WithKeyboardBinding(GameInputHandler.Paths.Mouse.ScrollDown)
             .WithControllerBinding(GameInputHandler.Paths.Gamepad.DpadDown)

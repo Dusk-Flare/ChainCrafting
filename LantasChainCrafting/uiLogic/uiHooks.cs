@@ -77,7 +77,7 @@ namespace ChainCrafting.uiLogic
         private static void PDAInitialize(uGUI_PDA __instance)
         {
             GameObject craftTab = GameObject.Instantiate(__instance.tabLog.gameObject, __instance.transform.Find("Content"));
-            craftTab.name = "Crafting Helper";
+            craftTab.name = Language.main.Get("TabCraftingHelper");
             GameObject.DestroyImmediate(craftTab.GetComponent<uGUI_LogTab>());
             craftTab.AddComponent<uGUI_CraftingHelper>();
 

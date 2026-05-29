@@ -67,7 +67,8 @@ namespace ChainCrafting.uiLogic
                 if (CraftingInputs.CanUpCraft) input += GameInput.FormatButton(CraftingInputs.UpCraft);
                 if (CraftingInputs.CanUpCraft && CraftingInputs.CanDownCraft) input += " / ";
                 if (CraftingInputs.CanDownCraft) input += GameInput.FormatButton(CraftingInputs.DownCraft);
-                if (input.Length > 0) TooltipFactory.WriteAction(data.postfix, input, "Change Crafting Amount");
+                if (input.Length > 0) TooltipFactory.WriteAction(data.postfix, input, Language.main.Get("ActionChangeCraft_Bind"));
+                TooltipFactory.WriteAction(data.postfix, GameInput.FormatButton(CraftingInputs.RawResources), Language.main.Get("ActionRawResources_Bind"));
             }
         }
 
