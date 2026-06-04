@@ -45,7 +45,7 @@ namespace ChainCrafting.uiLogic
             CraftingInputs.OnRawResourcesUpdate -= () => __instance.ingredientsDirty = true;
         }
 
-        [HarmonyPatch(typeof(uGUI_BlueprintsTab))]
+        /*[HarmonyPatch(typeof(uGUI_BlueprintsTab))]
         [HarmonyPatch(nameof(uGUI_BlueprintsTab.OnPointerClick))]
         [HarmonyPrefix]
         private static bool OnPointerClick(int button)
@@ -82,7 +82,7 @@ namespace ChainCrafting.uiLogic
             craftTab.AddComponent<uGUI_CraftingHelper>();
 
             __instance.tabs.Add(Plugin.CraftingHelper, craftTab.GetComponent<uGUI_PDATab>());
-        }
+        }*/
 
         [HarmonyPatch(typeof(uGUI_CraftingMenu))]
         [HarmonyPatch(nameof(uGUI_CraftingMenu.Open))]
@@ -90,9 +90,7 @@ namespace ChainCrafting.uiLogic
         private static void Open(uGUI_CraftingMenu __instance)
         {
             CraftingInputs.OnCraftCountUpdate += () => __instance.isDirty = true;
-            bool open = __instance.client is GhostCrafter;
-            CraftingInputs.GhostCrafterOpen = open;
-            if(!open) CraftingInputs.CraftCount = 1;
+            CraftingInputs.GhostCrafterOpen = __instance.client is GhostCrafter;
         }
 
         [HarmonyPatch(typeof(uGUI_CraftingMenu))]

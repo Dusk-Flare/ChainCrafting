@@ -87,6 +87,18 @@ namespace ChainCrafting.Utils
             Table[type] = amount; 
             return false;
         }
+        public bool TryAdd(TechType type, int amount)
+        {
+            if(Contains(type)) return false;
+            Table[type] = amount;
+            return true;
+        }
+        public Resource GetOrSet(TechType type, int amount)
+        {
+            if (Contains(type)) return this[type];
+            Table[type] = amount;
+            return this[type];
+        }
         public bool AddAll(List<Resource> resources)
         {
             bool anyAdded = false;
@@ -101,9 +113,12 @@ namespace ChainCrafting.Utils
                 if (Table[type] <= 0) Remove(type);
             }
         }
+        public int AmountOf(TechType type) => Contains(type) ? Table[type] : 0;
         public void Remove(TechType type) => Table.Remove(type);
         public void Set(Resource resource) => Set(resource.Type, resource.Amount);
         public bool Add(Resource resource) => Add(resource.Type, resource.Amount);
+        public bool TryAdd(Resource resource) => TryAdd(resource.Type, resource.Amount);
+        public Resource GetOrSet(Resource resource) => GetOrSet(resource.Type, resource.Amount);
         public bool AddAll(ResourceTable resourceTable) => AddAll(resourceTable.ToList());
         public void Remove(Resource resource) => Remove(resource.Type);
         public void Subtract(Resource resource) => Subtract(resource.Type, resource.Amount);
@@ -115,6 +130,13 @@ namespace ChainCrafting.Utils
         public static implicit operator List<Resource>(ResourceTable resources) => resources.Table.Select(entry => new Resource(entry)).ToList();
         public static implicit operator ResourceTable(List<Resource> resources) => new(resources);
         public static implicit operator ResourceTable(Dictionary<TechType, int> resources) => new(resources);
+
+        public override string ToString()
+        {
+            StringBuilder sb = new();
+            foreach (Resource resource in Table) sb.AppendLine(resource.ToString());
+            return sb.ToString();
+        }
     }
 
     public class ResourceTree

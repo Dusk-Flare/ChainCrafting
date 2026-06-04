@@ -75,7 +75,7 @@ namespace ChainCrafting.uiLogic
         public static void BaseUpdateIngredients(uGUI_RecipeEntry self, ItemsContainer container, bool ping)
         {
             ReadOnlyCollection<Ingredient> ingredients = TechData.GetIngredients(self.techType);
-            int craftAmount = TechData.GetCraftAmount(self.techType) * CraftingInputs.CraftCount;
+            int craftAmount = Resources.Yield(self.techType);
             int num = -1;
             int num2 = (ingredients != null) ? ingredients.Count : 0;
             while (self.items.Count < num2)

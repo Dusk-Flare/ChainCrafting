@@ -32,12 +32,11 @@ namespace ChainCrafting.Configs
             get => _craftCount;
             set
             {
-                if((GhostCrafterOpen || value == 1) && value != _craftCount)
+                if(value != _craftCount)
                 {
                     if(value >= 1 && value <= CraftingMenu.UpperBound)
                     {
                         _craftCount = value;
-                        Plugin.Logger.LogInfo($"Craft count updated to {value}");
                         OnCraftCountUpdate?.Invoke();
                     } 
                 }
@@ -50,16 +49,16 @@ namespace ChainCrafting.Configs
         {
             if (!GameInput.IsInitialized) return;
 
-            if (GameInput.GetButtonDown(CraftingHelper)) OnCrftingHelperOpen?.Invoke();
+            //if (GameInput.GetButtonDown(CraftingHelper)) OnCrftingHelperOpen?.Invoke();
 
             if (CraftingMenu.OnHoldEnabled) RawResourcesEnabled = GameInput.GetButtonHeld(RawResources);
             else if (GameInput.GetButtonDown(RawResources)) ToggleCrafts();
 
-            if (uGUI_Tooltip.visible)
+            if (uGUI_Tooltip.visible && GhostCrafterOpen)
             {
-                if (GameInput.GetButtonDown(UpCraft)) CraftCount++;
-                if (GameInput.GetButtonDown(DownCraft)) CraftCount--;
-            } 
+                if (CanUpCraft && GameInput.GetButtonDown(UpCraft)) CraftCount++;
+                if (CanDownCraft && GameInput.GetButtonDown(DownCraft)) CraftCount--;
+            }
             else CraftCount = 1;
         }
 
@@ -70,12 +69,12 @@ namespace ChainCrafting.Configs
             .AvoidConflicts(GameInput.Device.Keyboard)
             .WithCategory(PluginInfo.PLUGIN_NAME);
 
-        public static GameInput.Button CraftingHelper = EnumHandler.AddEntry<GameInput.Button>("CraftingHelper_Bind")
+        /*public static GameInput.Button CraftingHelper = EnumHandler.AddEntry<GameInput.Button>("CraftingHelper_Bind")
             .CreateInput()
             .WithKeyboardBinding(GameInputHandler.Paths.Mouse.MiddleButton)
             .WithControllerBinding(GameInputHandler.Paths.Gamepad.RightStick)
             .AvoidConflicts(GameInput.Device.Keyboard)
-            .WithCategory(PluginInfo.PLUGIN_NAME);
+            .WithCategory(PluginInfo.PLUGIN_NAME);*/
 
         public static GameInput.Button UpCraft = EnumHandler.AddEntry<GameInput.Button>("UpCraft_Bind")
             .CreateInput()

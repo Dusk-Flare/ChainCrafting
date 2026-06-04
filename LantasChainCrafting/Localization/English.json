@@ -16,5 +16,13 @@
   "OptionDownCraft_Bind": "Lower Craft",
   "OptionDesc_DownCraft_Bind": "Lowers the amount of bulk crafted items",
 
-  "TabCraftingHelper": "Crafting Helper"
+  "TabCraftingHelper": "Crafting Helper",
+
+  "ConfigTab": "Chain Options",
+
+  "ConfigOnHold": "Raw Resources On Hold",
+  "ConfigOnHoldDesc": "Whether or not the \"Raw Resources\" keybind should be held down or pressed to activate",
+  "ConfigBulkCraft": "Bulk Craft Count",
+  "ConfigBulkCraftDesc": "Maximum amount of items to craft when using the UpCraft and DownCraft keybinds"
+
 }

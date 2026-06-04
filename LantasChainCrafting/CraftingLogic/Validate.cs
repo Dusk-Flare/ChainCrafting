@@ -11,7 +11,7 @@ namespace ChainCrafting.CraftingLogic
         {
             if (!GameModeUtils.RequiresIngredients()) return true;
             if(!Resources.Craftable(techType)) return false;
-            Logic.ChainCraft(techType, count, out Stack<Resource> craftStack);
+            Logic.ChainCraft(new(techType, count), out Stack<Resource> craftStack);
             CostOfCraft(craftStack, out ResourceTable entryCost);
             bool fuffiled = ValidateCraft(entryCost);
             return fuffiled;
@@ -25,37 +25,25 @@ namespace ChainCrafting.CraftingLogic
                 int materialCount = resource.Amount;
                 int materialYield = resource.Yield;
                 if (resource.Amount <= 0) continue;
-
-                foreach (Resource ingredient in resource.Components)
+                foreach (Resource component in resource.Components)
                 {
-                    if (ingredient.Craftable) continue;
-                    entryCost.Add(ingredient.Type, ingredient.Amount * materialCount / Math.Max(1, materialYield));
+                    if (component.Craftable) continue;
+                    entryCost.Add(component with { Amount = (int)Math.Ceiling((float)materialCount / Math.Max(1, materialYield)) * component.Amount });
                 }
             }
         }
 
-        public static void CostOfOwned(TechType techType, int count, out ResourceTable entryCost)
+        public static void CostOfOwned(Resource target, out ResourceTable savedCost)
         {
-            entryCost = new();
-            Logic.OrganisedStack(techType, count, out Stack<Resource> craftStack);
-            foreach (Resource resource in craftStack)
+            savedCost = new();
+            Logic.OrganisedStack(target, out Stack<Resource> baseStack);
+            Logic.ChainCraft(target, out Stack<Resource> craftStack);
+            Logic.AccountForYields(ref baseStack);
+            CostOfCraft(baseStack, out ResourceTable baseCost);
+            CostOfCraft(craftStack, out ResourceTable ownedCost);
+            foreach (Resource resource in baseCost) 
             {
-                int materialCount = resource.Amount;
-                int materialYield = resource.Yield;
-                if (resource.Amount <= 0 || resource.PickupCount < resource.Amount) continue;
-                foreach (Resource ingredient in resource.Components)
-                {
-                    TechType type = ingredient.Type;
-                    int amount = (int) Math.Ceiling((decimal)ingredient.Amount * materialCount / Math.Max(1, materialYield));
-                    if (ingredient.Craftable)
-                    {
-                        Logic.OrganisedStack(type, amount, out Stack<Resource> subStack);
-                        CostOfCraft(subStack, out ResourceTable subCost);
-                        entryCost.AddAll(subCost);
-                        continue;
-                    }
-                    entryCost.Add(type, amount);
-                }
+                savedCost.Add(resource - ownedCost.AmountOf(resource.Type)); 
             }
         }
 

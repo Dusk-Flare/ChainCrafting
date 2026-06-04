@@ -15,9 +15,7 @@ namespace ChainCrafting.uiLogic
             get => _currentType;
             set
             {
-                Plugin.Logger.LogInfo($"CurrentTechType: {_currentType}");
                 _currentType = value;
-                Plugin.Logger.LogInfo($"CurrentTechType set to {value}.");
                 _instance.UpdateIcon(new(10, 10), value);
             } 
         }
