@@ -21,4 +21,5 @@ Nautilus is required to run this mod
 Thank you @EldritchCarMaker (Discord) for all of the technical help\
 Thank you @Kallie23 (Discord) for the thumbnail image provided on this mod page\
 Thank you @Pritace (Discord) for the motivation to keep going when i was about to give up\
-and Thank you to @slin_o (Discord) for the inspiration for bulk crafting
+Thank you to @slin_o (Discord) for the inspiration for bulk crafting
+and a big thanks to Octop3dus (Nexus) [creator of Subcraftica] for all the help with compatibility
