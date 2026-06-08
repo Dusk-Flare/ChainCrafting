@@ -13,8 +13,7 @@ namespace ChainCrafting.CraftingLogic
             if(!Resources.Craftable(techType)) return false;
             Logic.ChainCraft(new(techType, count), out Stack<Resource> craftStack);
             CostOfCraft(craftStack, out ResourceTable entryCost);
-            bool fuffiled = ValidateCraft(entryCost);
-            return fuffiled;
+            return ValidateCraft(entryCost);
         }
 
         public static void CostOfCraft(Stack<Resource> craftStack, out ResourceTable entryCost)

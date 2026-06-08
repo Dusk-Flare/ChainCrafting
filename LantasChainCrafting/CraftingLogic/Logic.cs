@@ -13,7 +13,7 @@ namespace ChainCrafting.CraftingLogic
     {
         public static IEnumerator Craft(GhostCrafter crafter, TechType techType)
         {
-            ChainCraft(new(techType, CraftingInputs.CraftCount), out Stack<Resource> craftStack);
+            ChainCraft(new(techType, Resources.Yield(techType) * CraftingInputs.CraftCount), out Stack<Resource> craftStack);
             CraftingInputs.CraftCount = 1;
             while (craftStack.Any())
             {
@@ -21,13 +21,15 @@ namespace ChainCrafting.CraftingLogic
                 TechType next = item.Type;
                 for (int i = 0; i < item.Amount; i++)
                 {
-                    if (CrafterLogic.ConsumeEnergy(crafter.powerRelay, 5f) && Consume(next))
+                    if (!CrafterLogic.ConsumeEnergy(crafter.powerRelay, 5f) || !Consume(next)) yield break;
+                    crafter.OnStateChanged(true);
+                    crafter._logic.Craft(next, Math.Max(item.CraftTime, 2.7f));
+                    while (crafter.HasCraftedItem()) 
                     {
-                        crafter.OnStateChanged(true);
-                        crafter._logic.Craft(next, Math.Max(item.CraftTime, 2.7f));
-                        while (crafter.HasCraftedItem()) yield return null;
-                        crafter.OnStateChanged(false);
+                        if(!crafter._logic.inProgress) crafter.OnStateChanged(false);
+                        yield return null;
                     }
+                    crafter.OnStateChanged(false);
                 }
             }
         }
@@ -125,12 +127,13 @@ namespace ChainCrafting.CraftingLogic
                 Resource resource = tempStack.Pop();
                 TechType resourceType = resource.Type;
                 int owned = Math.Min(resource.Amount, resource.PickupCount);
-                if (resourceType != target) catalog.Subtract(resourceType, owned);
+                int resourceAmount = resourceType != target ? (int)Math.Ceiling((float)(resource.Amount - owned) / resource.Yield) : resource.Amount;
+                catalog.Subtract(resourceType, resource.Amount - Math.Min(resource.Amount, resourceAmount));
                 foreach (Resource component in resource.Components)
                 {
                     if(!component.Craftable) continue;
                     TechType type = component.Type;
-                    int requiredAmount = (int)Math.Ceiling((float)(resource.Amount - owned) / resource.Yield) * component.Amount;
+                    int requiredAmount = resourceAmount * component.Amount;
                     int difference = component.Amount - Math.Min(component.Amount, requiredAmount);
                     catalog.Subtract(type, difference);
                 }
@@ -146,9 +149,9 @@ namespace ChainCrafting.CraftingLogic
 
         public static bool Consume(TechType techType)
         {
-            if (Validate.IsFulfilled(techType, 1))
+            if (Validate.IsFulfilled(techType))
             {
-                Inventory.main.ConsumeResourcesForRecipe(techType, null);
+                Inventory.main.ConsumeResourcesForRecipe(techType);
                 return true;
             }
             ErrorMessage.AddWarning(Language.main.Get("DontHaveNeededIngredients"));

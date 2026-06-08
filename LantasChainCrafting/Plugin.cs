@@ -12,8 +12,11 @@ namespace ChainCrafting
 {
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
     [BepInDependency("com.snmodding.nautilus")]
+    [BepInDependency("mades.redo.inventorystacking", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("com.Complot69.virtualstack", BepInDependency.DependencyFlags.SoftDependency)]
     public class Plugin : BaseUnityPlugin
     {
+        //TODO: Add cancel button using the handreticle action.
         public new static ManualLogSource Logger { get; private set; }
 
         private static Assembly Assembly { get; } = Assembly.GetExecutingAssembly();
@@ -32,8 +35,7 @@ namespace ChainCrafting
             Logger = base.Logger;
             Logger.LogInfo("Loading Localization!");
             LanguageHandler.RegisterLocalizationFolder();
-            
-            
+
             Logger.LogInfo("Applying Harmony patches!");
             Harmony.CreateAndPatchAll(Assembly, $"{PluginInfo.PLUGIN_GUID}");
             OptionsPanelHandler.RegisterModOptions(Menu = new());

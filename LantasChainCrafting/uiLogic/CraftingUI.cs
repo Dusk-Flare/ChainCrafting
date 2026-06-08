@@ -110,14 +110,13 @@ namespace ChainCrafting.uiLogic
                 return;
             }
             int count = ingredients.Count;
-            Inventory main = Inventory.main;
             StringBuilder stringBuilder = new();
             for (int i = 0; i < count; i++)
             {
                 stringBuilder.Length = 0;
                 Resource ingredient = ingredients[i];
                 TechType techType = ingredient.Type;
-                int pickupCount = main.GetPickupCount(techType) + owned.AmountOf(techType);
+                int pickupCount = Resources.PickupCount(techType) + owned.AmountOf(techType);
                 int amount = ingredient.Amount;
                 bool flag = pickupCount >= amount || !GameModeUtils.RequiresIngredients();
                 bool hasIngredients = false;
@@ -156,7 +155,7 @@ namespace ChainCrafting.uiLogic
         public static bool ActionAvailable(uGUI_CraftingMenu.Node sender)
         {
             TreeAction action = sender.action;
-            return action == TreeAction.Expand || (action == TreeAction.Craft && CrafterLogic.IsCraftRecipeUnlocked(sender.techType) && Validate.IsFulfilled(sender.techType, CraftingInputs.CraftCount));
+            return action == TreeAction.Expand || (action == TreeAction.Craft && CrafterLogic.IsCraftRecipeUnlocked(sender.techType) && Validate.IsFulfilled(sender.techType, Resources.Yield(sender.techType) * CraftingInputs.CraftCount));
         }
     }
 }

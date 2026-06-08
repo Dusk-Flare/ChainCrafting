@@ -9,8 +9,8 @@ namespace ChainCrafting.Utils
     public static class Resources
     {
         public static bool Craftable(TechType type) => CraftTree.IsCraftable(type);
-        public static int PickupCount(TechType type) => Inventory.main.GetPickupCount(type);
-        public static int Yield(TechType type) => TechData.GetCraftAmount(type);
+        public static int PickupCount(TechType type) => Compatibility.ResourceCount(type);
+        public static int Yield(TechType type) => Math.Min(TechData.GetCraftAmount(type), 1);
         public static float CraftTime(TechType type) => TechData.GetCraftTime(type, out float time) ? time : 0;
 
         public static List<Resource> ListOf(Dictionary<TechType, int> dictionary) => dictionary.Select(keyPair => (Resource)keyPair).ToList();
@@ -42,15 +42,25 @@ namespace ChainCrafting.Utils
         public List<Resource> Components => Resources.ComponentsOf(Type);
         public float CraftTime => Resources.CraftTime(Type);
 
-        public static Resource operator +(Resource resource, int value) => resource with { Amount = resource.Amount + value };
-        public static Resource operator -(Resource resource, int value) => resource with { Amount = Math.Max(0, resource.Amount - value) };
-        public static Resource operator *(Resource resource, int value) => resource with { Amount = resource.Amount * value };
-        public static Resource operator /(Resource resource, int value) => resource with { Amount = resource.Amount / Math.Max(1, value) };
 
         public static implicit operator Ingredient(Resource resource) => new(resource.Type, resource.Amount);
         public static implicit operator Resource(uGUI_CraftingMenu.Node node) => new(node);
         public static implicit operator Resource(KeyValuePair<TechType, int> pair) => new(pair);
         public static implicit operator Resource(Ingredient ingredient) => new(ingredient);
+        public static Resource operator +(Resource resource, int value) => resource with { Amount = resource.Amount + value };
+        public static Resource operator -(Resource resource, int value) => resource with { Amount = Math.Max(0, resource.Amount - value) };
+        public static Resource operator *(Resource resource, int value) => resource with { Amount = resource.Amount * value };
+        public static Resource operator /(Resource resource, int value) => resource with { Amount = resource.Amount / Math.Max(1, value) };
+        public static bool operator >(Resource resource, int value) => resource.Amount > value;
+        public static bool operator <(Resource resource, int value) => resource.Amount < value;
+        public static bool operator >=(Resource resource, int value) => resource.Amount >= value;
+        public static bool operator <=(Resource resource, int value) => resource.Amount <= value;
+        public static bool operator ==(Resource resource, int value) => resource.Amount == value;
+        public static bool operator !=(Resource resource, int value) => resource.Amount != value;
+        public static bool operator ==(Resource resource, TechType value) => resource.Type == value;
+        public static bool operator !=(Resource resource, TechType value) => resource.Type != value;
+
+
         public override string ToString() => $"{Type}: {Amount}";
     }
 
