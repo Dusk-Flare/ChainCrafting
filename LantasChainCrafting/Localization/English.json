@@ -23,5 +23,7 @@
   "ConfigOnHold": "Raw Resources On Hold",
   "ConfigOnHoldDesc": "Whether or not the \"Raw Resources\" keybind should be held down or pressed to activate",
   "ConfigBulkCraft": "Bulk Craft Count",
-  "ConfigBulkCraftDesc": "Maximum amount of items to craft when using the UpCraft and DownCraft keybinds"
+  "ConfigBulkCraftDesc": "Maximum amount of items to craft when using the UpCraft and DownCraft keybinds",
+
+  "CraftStop": "Cease crafting"
 }

@@ -1,8 +1,8 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using ChainCrafting.Configs;
-using ChainCrafting.CraftingLogic;
 using ChainCrafting.uiLogic;
+using ChainCrafting.Utils;
 using HarmonyLib;
 using Nautilus.Handlers;
 using System.Reflection;
@@ -18,6 +18,7 @@ namespace ChainCrafting
     {
         //TODO: Add cancel button using the handreticle action.
         public new static ManualLogSource Logger { get; private set; }
+        private Chronos Chronos { get; set; }
 
         private static Assembly Assembly { get; } = Assembly.GetExecutingAssembly();
 
@@ -33,6 +34,7 @@ namespace ChainCrafting
         private void Awake()
         {
             Logger = base.Logger;
+            //Logger = new Chronos(nameof(Plugin), base.Logger);
             Logger.LogInfo("Loading Localization!");
             LanguageHandler.RegisterLocalizationFolder();
 
