@@ -2,6 +2,7 @@
 using ChainCrafting.Utils;
 using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace ChainCrafting.CraftingLogic
 {
@@ -11,6 +12,7 @@ namespace ChainCrafting.CraftingLogic
         {
             if (!GameModeUtils.RequiresIngredients()) return true;
             if(!Resources.Craftable(techType)) return false;
+            StringBuilder b = new();
             Logic.ChainCraft(new(techType, count), out Stack<Resource> craftStack);
             CostOfCraft(craftStack, out ResourceTable entryCost);
             return ValidateCraft(entryCost);

@@ -10,7 +10,7 @@ namespace ChainCrafting.Utils
     {
         public static bool Craftable(TechType type) => CraftTree.IsCraftable(type);
         public static int PickupCount(TechType type) => Compatibility.ResourceCount(type);
-        public static int Yield(TechType type) => Math.Min(TechData.GetCraftAmount(type), 1);
+        public static int Yield(TechType type) => Math.Max(TechData.GetCraftAmount(type), 1);
         public static float CraftTime(TechType type) => TechData.GetCraftTime(type, out float time) ? time : 0;
 
         public static List<Resource> ListOf(Dictionary<TechType, int> dictionary) => dictionary.Select(keyPair => (Resource)keyPair).ToList();

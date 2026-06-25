@@ -6,6 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Text;
 
 namespace ChainCrafting.CraftingLogic
 {
@@ -21,12 +22,21 @@ namespace ChainCrafting.CraftingLogic
                 TechType next = item.Type;
                 for (int i = 0; i < item.Amount; i++)
                 {
-                    if (!CrafterLogic.ConsumeEnergy(crafter.powerRelay, 5f) || !Consume(next)) yield break;
+                    if (!CrafterLogic.ConsumeEnergy(crafter.powerRelay, 5f))
+                    {
+                        ErrorMessage.AddWarning("Not enough power");
+                        yield break;
+                    }
+                    if(!Consume(next))
+                    {
+                        ErrorMessage.AddWarning(Language.main.Get("DontHaveNeededIngredients"));
+                        yield break;
+                    }
                     crafter.OnStateChanged(true);
                     crafter._logic.Craft(next, Math.Max(item.CraftTime, 2.7f));
-                    while (crafter.HasCraftedItem()) 
+                    while (crafter.HasCraftedItem())
                     {
-                        if(!crafter._logic.inProgress) crafter.OnStateChanged(false);
+                        if (!crafter._logic.inProgress) crafter.OnStateChanged(false);
                         yield return null;
                     }
                     crafter.OnStateChanged(false);
@@ -38,13 +48,23 @@ namespace ChainCrafting.CraftingLogic
         {
             OrganisedStack(target, out craftStack);
             RemoveOwned(target.Type, ref craftStack);
+            StringBuilder builder = new();
+            builder.AppendLine($"Creating stack for {target}");
+            foreach (Resource item in craftStack) builder.AppendLine(item.ToString());
+            Plugin.Logger.LogInfo(builder);
         }
 
         public static void OrganisedStack(Resource target, out Stack<Resource> craftStack)
         {
+            StringBuilder builder = new();
             craftStack = new Stack<Resource>();
             CreateStack(target.Type, target.Amount, ref craftStack);
+            builder.AppendLine($"Creating stack for {target}");
+            foreach (Resource item in craftStack) builder.AppendLine(item.ToString());
+            builder.AppendLine("Organising the Stack:");
             OrganizeCraftStack(ref craftStack);
+            foreach (Resource item in craftStack) builder.AppendLine(item.ToString());
+            Plugin.Logger.LogInfo(builder.ToString());
         }
 
         public static void GetRequirements(Resource resource, out Stack<Resource> stack)
@@ -122,23 +142,28 @@ namespace ChainCrafting.CraftingLogic
                 catalog.Set(resource);
                 tempStack.Push(resource);
             }
+            StringBuilder dot = new();
             while (tempStack.Any())
             {
                 Resource resource = tempStack.Pop();
                 TechType resourceType = resource.Type;
                 int owned = Math.Min(resource.Amount, resource.PickupCount);
-                int resourceAmount = resourceType != target ? (int)Math.Ceiling((float)(resource.Amount - owned) / resource.Yield) : resource.Amount;
+                int resourceAmount = (resourceType != target) ? (int)Math.Ceiling((float)(resource.Amount - owned) / resource.Yield) : resource.Amount;
                 catalog.Subtract(resourceType, resource.Amount - Math.Min(resource.Amount, resourceAmount));
+                dot.AppendLine($"Removed {resource.Amount - Math.Min(resource.Amount, resourceAmount)} from {resource}");
                 foreach (Resource component in resource.Components)
                 {
                     if(!component.Craftable) continue;
                     TechType type = component.Type;
                     int requiredAmount = resourceAmount * component.Amount;
                     int difference = component.Amount - Math.Min(component.Amount, requiredAmount);
+
+                    dot.AppendLine($"Removed {difference} from {catalog[type]}");
                     catalog.Subtract(type, difference);
                 }
                 processingQueue.Enqueue(resource);
             }
+            Plugin.Logger.LogInfo(dot.ToString());
             while (processingQueue.Any())
             {
                 TechType item = processingQueue.Dequeue().Type;

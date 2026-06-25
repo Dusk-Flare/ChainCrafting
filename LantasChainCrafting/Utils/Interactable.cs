@@ -1,34 +1,83 @@
-﻿using System;
+﻿using Nautilus.Extensions;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace ChainCrafting.Utils
 {
-    public class Interactable : MonoBehaviour
+    public class Interactable : HandTarget, IHandTarget
     {
-        private readonly Dictionary<GameInput.Button, Action> inputCallbacks = new();
+        private event Action<GUIHand> _OnHandHover;
+        private readonly Dictionary<(GameInput.Button Button, bool IsOnHold), Action> inputCallbacks = new();
 
-        public void Update() {
-            foreach (GameInput.Button input in inputCallbacks.Keys)
+        private bool IsActiveTarget 
+        { 
+            get
             {
-                if (GameInput.GetButtonDown(input) || GameInput.GetButtonHeld(input)) inputCallbacks[input]?.Invoke();
+                try 
+                {
+                    GameObject activeTarget = Player.main.guiHand.GetActiveTarget();
+                    bool isParentActive = activeTarget == transform.parent;
+                    bool isSelfActive = activeTarget == transform.gameObject;
+                    return isParentActive || isSelfActive;
+                }
+                catch (NullReferenceException ex)
+                {
+                    Plugin.Logger.LogException(ex);
+                    return false;
+                }
             }
         }
 
-        public void RegisterInput(GameInput.Button button, Action callback)
+        public override void Awake() => base.Awake();
+
+        public void Update() 
         {
-            if(inputCallbacks.ContainsKey(button)) inputCallbacks[button] += callback;
-            else inputCallbacks.Add(button, callback);
+            if (!IsActiveTarget) return;
+            foreach ((GameInput.Button input, _) in inputCallbacks.Keys)
+            {
+                if (GameInput.GetButtonDown(input)) inputCallbacks[(input, false)]?.Invoke();
+                if (GameInput.GetButtonHeld(input)) inputCallbacks[(input, true)]?.Invoke();
+            }
+        }
+
+        public void RegisterInput(GameInput.Button button, bool isOnHoldAction, Action callback)
+        {
+            (GameInput.Button Button, bool IsOnHold) buttonInput = (button, isOnHoldAction);
+            if (inputCallbacks.ContainsKey(buttonInput)) inputCallbacks[buttonInput] += callback;
+            else inputCallbacks.Add(buttonInput, callback);
         }
 
         public void UnregisterAction(GameInput.Button button, Action callback)
         {
-            if (inputCallbacks.ContainsKey(button)) inputCallbacks[button] -= callback;
+            if (inputCallbacks.ContainsKey((button, false))) inputCallbacks[(button, false)] -= callback;
+            if (inputCallbacks.ContainsKey((button, true))) inputCallbacks[(button, true)] -= callback;
         }
 
         public void UnregisterInput(GameInput.Button button)
         {
-            inputCallbacks.Remove(button);
+            inputCallbacks.Remove((button, false));
+            inputCallbacks.Remove((button, true));
+        }
+
+        public void RegisterOnHandHover(Action<GUIHand> callback)
+        {
+            _OnHandHover += callback;
+        }
+
+        public void UnregisterOnHandHover(Action<GUIHand> callback)
+        {
+            _OnHandHover -= callback;
+        }
+
+        public void OnHandHover(GUIHand hand)
+        {
+            _OnHandHover?.Invoke(hand);
+        }
+
+        public void OnHandClick(GUIHand hand)
+        {
+            
         }
     }
 }

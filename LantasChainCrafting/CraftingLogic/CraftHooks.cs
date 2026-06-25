@@ -1,4 +1,5 @@
-﻿using ChainCrafting.uiLogic;
+﻿using ChainCrafting.Configs;
+using ChainCrafting.uiLogic;
 using ChainCrafting.Utils;
 using HarmonyLib;
 using UnityEngine;
@@ -22,7 +23,7 @@ namespace ChainCrafting.CraftingLogic
         [HarmonyPatch(typeof(GhostCrafter))]
         [HarmonyPatch(nameof(GhostCrafter.OnHandHover))]
         [HarmonyPostfix]
-        private static void OnHandHover(GhostCrafter __instance, GUIHand hand)
+        private static void OnHandHover()
         {
             HandReticle.main.SetText(HandReticle.TextType.Use, "CraftStop", true, GameInput.Button.RightHand);
         }
@@ -33,12 +34,12 @@ namespace ChainCrafting.CraftingLogic
         private static void Initialize(GhostCrafter __instance)
         {
             Interactable interactable = __instance.gameObject.EnsureComponent<Interactable>();
-            interactable.RegisterInput(GameInput.Button.RightHand, () =>
+            Plugin.Logger.LogInfo($"Added Interactable to {__instance.gameObject.name}");
+            interactable.RegisterInput(GameInput.Button.RightHand, false, () =>
             {
                 if (CraftRoutine == null) return;
                 __instance.StopCoroutine(CraftRoutine);
                 __instance.OnStateChanged(false);
-                ErrorMessage.AddMessage("Crafting stopped");
             });
         }
 

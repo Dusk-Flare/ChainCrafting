@@ -7,6 +7,8 @@ using HarmonyLib;
 using Nautilus.Handlers;
 using System.Reflection;
 using UnityEngine;
+using HarmonyLib.Tools;
+using System.Collections.Generic;
 
 namespace ChainCrafting
 {
@@ -17,8 +19,7 @@ namespace ChainCrafting
     public class Plugin : BaseUnityPlugin
     {
         //TODO: Add cancel button using the handreticle action.
-        public new static ManualLogSource Logger { get; private set; }
-        private Chronos Chronos { get; set; }
+        public new static Mercury Logger { get; private set; }
 
         private static Assembly Assembly { get; } = Assembly.GetExecutingAssembly();
 
@@ -28,13 +29,15 @@ namespace ChainCrafting
         public static Color availableColor = new(0.58f, 0.87f, 0.0f, 1.0f);
         public static Color craftableColor = new(1.0f, 0.886f, 0.031f, 1.0f);
         public static Color unavailableColor = new(0.87f, 0.25f, 0.15f, 1.0f);
+        public static Queue<Resource> CraftingQueue { get; private set; } = new();
         public static CraftingMenu Menu { get; private set; }
         public static TechType tempType;
         public static PDATab CraftingHelper;
         private void Awake()
         {
-            Logger = base.Logger;
-            //Logger = new Chronos(nameof(Plugin), base.Logger);
+            //Logger = base.Logger;
+            Logger = new Mercury(PluginInfo.PLUGIN_NAME);
+            Logger.LogInfo($"Initializing {PluginInfo.PLUGIN_GUID} v{PluginInfo.PLUGIN_VERSION}!\nAnd loading Localization!\nAnd applying Harmony patches!");
             Logger.LogInfo("Loading Localization!");
             LanguageHandler.RegisterLocalizationFolder();
 
