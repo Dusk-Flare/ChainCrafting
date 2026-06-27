@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
+using UnityEngine;
+using Resources = ChainCrafting.Utils.Resources;
 
 namespace ChainCrafting.CraftingLogic
 {
@@ -15,6 +17,7 @@ namespace ChainCrafting.CraftingLogic
         public static IEnumerator Craft(GhostCrafter crafter, TechType techType)
         {
             ChainCraft(new(techType, Resources.Yield(techType) * CraftingInputs.CraftCount), out Stack<Resource> craftStack);
+            Plugin.Logger.LogInfo($"Crafting {techType}, Yield of {Resources.Yield(techType)} and count of {CraftingInputs.CraftCount}? {craftStack.Any()}");
             CraftingInputs.CraftCount = 1;
             while (craftStack.Any())
             {
@@ -33,7 +36,7 @@ namespace ChainCrafting.CraftingLogic
                         yield break;
                     }
                     crafter.OnStateChanged(true);
-                    crafter._logic.Craft(next, Math.Max(item.CraftTime, 2.7f));
+                    crafter._logic.Craft(next, Mathf.Max(item.CraftTime, 2.7f));
                     while (crafter.HasCraftedItem())
                     {
                         if (!crafter._logic.inProgress) crafter.OnStateChanged(false);
@@ -47,24 +50,15 @@ namespace ChainCrafting.CraftingLogic
         public static void ChainCraft(Resource target, out Stack<Resource> craftStack)
         {
             OrganisedStack(target, out craftStack);
+            AccountForYields(ref craftStack);
             RemoveOwned(target.Type, ref craftStack);
-            StringBuilder builder = new();
-            builder.AppendLine($"Creating stack for {target}");
-            foreach (Resource item in craftStack) builder.AppendLine(item.ToString());
-            Plugin.Logger.LogInfo(builder);
         }
 
         public static void OrganisedStack(Resource target, out Stack<Resource> craftStack)
         {
-            StringBuilder builder = new();
             craftStack = new Stack<Resource>();
             CreateStack(target.Type, target.Amount, ref craftStack);
-            builder.AppendLine($"Creating stack for {target}");
-            foreach (Resource item in craftStack) builder.AppendLine(item.ToString());
-            builder.AppendLine("Organising the Stack:");
             OrganizeCraftStack(ref craftStack);
-            foreach (Resource item in craftStack) builder.AppendLine(item.ToString());
-            Plugin.Logger.LogInfo(builder.ToString());
         }
 
         public static void GetRequirements(Resource resource, out Stack<Resource> stack)
@@ -76,7 +70,7 @@ namespace ChainCrafting.CraftingLogic
 
         public static void CreateStack(TechType recipe, int amount, ref Stack<Resource> stack)
         {
-            if (recipe == TechType.None) return;
+            if (recipe == TechType.None || amount <= 0) return;
             if (!CraftTree.IsCraftable(recipe)) return;
             stack.Push(new(recipe, amount));
             ReadOnlyCollection<Ingredient> component = TechData.GetIngredients(recipe);
@@ -117,16 +111,16 @@ namespace ChainCrafting.CraftingLogic
                 foreach(Resource component in resource.Components)
                 {
                     if(!component.Craftable) continue;
-                    TechType type = component.Type;
-                    int requiredAmount = (int)Math.Ceiling((float)(resource.Amount) / resource.Yield) * component.Amount;
-                    catalog.Subtract(type, Math.Max(0, component.Amount - requiredAmount));
+                    int requiredAmount = (int)Mathf.Ceil((float)catalog.AmountOf(resource) / resource.Yield) * catalog.AmountOf(component);
+                    catalog.Subtract(component.Type, Mathf.Max(0, component.Amount - requiredAmount));
                 }
                 processingQueue.Enqueue(resource);
             }
             while (processingQueue.Any())
             {
                 TechType item = processingQueue.Dequeue().Type;
-                craftStack.Push(catalog[item]);
+                Resource resource = catalog[item];
+                if(resource != null) craftStack.Push(resource);
             }
         }
 
@@ -142,33 +136,22 @@ namespace ChainCrafting.CraftingLogic
                 catalog.Set(resource);
                 tempStack.Push(resource);
             }
-            StringBuilder dot = new();
-            while (tempStack.Any())
+            while(tempStack.Any())
             {
                 Resource resource = tempStack.Pop();
-                TechType resourceType = resource.Type;
-                int owned = Math.Min(resource.Amount, resource.PickupCount);
-                int resourceAmount = (resourceType != target) ? (int)Math.Ceiling((float)(resource.Amount - owned) / resource.Yield) : resource.Amount;
-                catalog.Subtract(resourceType, resource.Amount - Math.Min(resource.Amount, resourceAmount));
-                dot.AppendLine($"Removed {resource.Amount - Math.Min(resource.Amount, resourceAmount)} from {resource}");
-                foreach (Resource component in resource.Components)
+                if (resource != target)
                 {
-                    if(!component.Craftable) continue;
-                    TechType type = component.Type;
-                    int requiredAmount = resourceAmount * component.Amount;
-                    int difference = component.Amount - Math.Min(component.Amount, requiredAmount);
-
-                    dot.AppendLine($"Removed {difference} from {catalog[type]}");
-                    catalog.Subtract(type, difference);
+                    OrganisedStack(resource with { Amount = resource.PickupCount }, out Stack<Resource> componentStack);
+                    AccountForYields(ref componentStack);
+                    foreach (Resource item in componentStack) catalog.Subtract(item);
                 }
                 processingQueue.Enqueue(resource);
             }
-            Plugin.Logger.LogInfo(dot.ToString());
             while (processingQueue.Any())
             {
                 TechType item = processingQueue.Dequeue().Type;
                 Resource resource = catalog[item];
-                if(resource != null) craftStack.Push(resource);
+                if (resource != null) craftStack.Push(resource);
             }
         }
 

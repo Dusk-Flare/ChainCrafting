@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
+using UnityEngine;
 
 namespace ChainCrafting.Utils
 {
@@ -10,7 +10,7 @@ namespace ChainCrafting.Utils
     {
         public static bool Craftable(TechType type) => CraftTree.IsCraftable(type);
         public static int PickupCount(TechType type) => Compatibility.ResourceCount(type);
-        public static int Yield(TechType type) => Math.Max(TechData.GetCraftAmount(type), 1);
+        public static int Yield(TechType type) => Mathf.Max(TechData.GetCraftAmount(type), 1);
         public static float CraftTime(TechType type) => TechData.GetCraftTime(type, out float time) ? time : 0;
 
         public static List<Resource> ListOf(Dictionary<TechType, int> dictionary) => dictionary.Select(keyPair => (Resource)keyPair).ToList();
@@ -48,9 +48,9 @@ namespace ChainCrafting.Utils
         public static implicit operator Resource(KeyValuePair<TechType, int> pair) => new(pair);
         public static implicit operator Resource(Ingredient ingredient) => new(ingredient);
         public static Resource operator +(Resource resource, int value) => resource with { Amount = resource.Amount + value };
-        public static Resource operator -(Resource resource, int value) => resource with { Amount = Math.Max(0, resource.Amount - value) };
+        public static Resource operator -(Resource resource, int value) => resource with { Amount = Mathf.Max(0, resource.Amount - value) };
         public static Resource operator *(Resource resource, int value) => resource with { Amount = resource.Amount * value };
-        public static Resource operator /(Resource resource, int value) => resource with { Amount = resource.Amount / Math.Max(1, value) };
+        public static Resource operator /(Resource resource, int value) => resource with { Amount = resource.Amount / Mathf.Max(1, value) };
         public static bool operator >(Resource resource, int value) => resource.Amount > value;
         public static bool operator <(Resource resource, int value) => resource.Amount < value;
         public static bool operator >=(Resource resource, int value) => resource.Amount >= value;
@@ -130,6 +130,7 @@ namespace ChainCrafting.Utils
         public bool TryAdd(Resource resource) => TryAdd(resource.Type, resource.Amount);
         public Resource GetOrSet(Resource resource) => GetOrSet(resource.Type, resource.Amount);
         public bool AddAll(ResourceTable resourceTable) => AddAll(resourceTable.ToList());
+        public int AmountOf(Resource resource) => AmountOf(resource.Type);
         public void Remove(Resource resource) => Remove(resource.Type);
         public void Subtract(Resource resource) => Subtract(resource.Type, resource.Amount);
         public void Clear() => Table.Clear();
@@ -189,7 +190,7 @@ namespace ChainCrafting.Utils
         {
             int depth = node.layer;
             if (node.children.Count == 0) return depth;
-            foreach (ResourceTree child in node.children) depth = Math.Max(depth, Depth(child));
+            foreach (ResourceTree child in node.children) depth = Mathf.Max(depth, Depth(child));
             return depth;
         }
 

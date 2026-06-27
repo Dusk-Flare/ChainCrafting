@@ -3,6 +3,8 @@ using ChainCrafting.Utils;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using UnityEngine;
+using Resources = ChainCrafting.Utils.Resources;
 
 namespace ChainCrafting.CraftingLogic
 {
@@ -12,10 +14,10 @@ namespace ChainCrafting.CraftingLogic
         {
             if (!GameModeUtils.RequiresIngredients()) return true;
             if(!Resources.Craftable(techType)) return false;
-            StringBuilder b = new();
             Logic.ChainCraft(new(techType, count), out Stack<Resource> craftStack);
             CostOfCraft(craftStack, out ResourceTable entryCost);
-            return ValidateCraft(entryCost);
+            bool craftable = ValidateCraft(entryCost);
+            return craftable;
         }
 
         public static void CostOfCraft(Stack<Resource> craftStack, out ResourceTable entryCost)
@@ -29,7 +31,7 @@ namespace ChainCrafting.CraftingLogic
                 foreach (Resource component in resource.Components)
                 {
                     if (component.Craftable) continue;
-                    entryCost.Add(component with { Amount = (int)Math.Ceiling((float)materialCount / Math.Max(1, materialYield)) * component.Amount });
+                    entryCost.Add(component with { Amount = (int)Mathf.Ceil((float)materialCount / Mathf.Max(1, materialYield)) * component.Amount });
                 }
             }
         }

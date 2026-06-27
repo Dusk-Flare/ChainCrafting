@@ -1,5 +1,5 @@
 ﻿using Nautilus.Options;
-using System;
+using UnityEngine;
 
 namespace ChainCrafting.Configs
 {
@@ -17,7 +17,7 @@ namespace ChainCrafting.Configs
             CraftCount.OnChanged += (sender, SliderOnChange) => 
             {
                 UpperBound = (int)SliderOnChange.Value;
-                CraftingInputs.CraftCount = Math.Min(CraftingInputs.CraftCount, UpperBound);
+                CraftingInputs.CraftCount = Mathf.Min(CraftingInputs.CraftCount, UpperBound);
             };
             AddItem(CraftCount);
         }

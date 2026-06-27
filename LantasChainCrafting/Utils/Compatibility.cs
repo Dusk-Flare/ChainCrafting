@@ -50,7 +50,7 @@ namespace ChainCrafting.Utils
             }
             catch (Exception e)
             {
-                Plugin.Logger.LogError(e.ToString());
+                Plugin.Logger.LogCatch(e);
             }
             Plugin.Logger.LogError($"Failed to find assembly {assemblyName}");
             return null;
@@ -65,7 +65,7 @@ namespace ChainCrafting.Utils
             }
             catch (Exception e)
             {
-                Plugin.Logger.LogError(e.ToString());
+                Plugin.Logger.LogCatch(e);
             }
             Plugin.Logger.LogError($"Failed to find assembly {assemblyName} for type {typeName}");
             return null;
@@ -80,7 +80,7 @@ namespace ChainCrafting.Utils
             }
             catch(Exception e)
             {
-                Plugin.Logger.LogError(e.ToString());
+                Plugin.Logger.LogCatch(e);
             }
             Plugin.Logger.LogError($"Failed to find method {methodName} in type {typeName} for assembly {assemblyName}");
             return null;
@@ -96,7 +96,7 @@ namespace ChainCrafting.Utils
             }
             catch(Exception e)
             {
-                Plugin.Logger.LogError(e.ToString());
+                Plugin.Logger.LogCatch(e);
             }
             Plugin.Logger.LogError($"Failed to find field {fieldName} in type {typeName} for assembly {assemblyName}");
             return null;
@@ -124,9 +124,9 @@ namespace ChainCrafting.Utils
                     return units;
                 }
             } 
-            catch(Exception e) 
+            catch(Exception e)
             {
-                Plugin.Logger.LogError(e.ToString());
+                Plugin.Logger.LogCatch(e);
                 Plugin.Logger.LogError("Failed to get stack size from MR Inventory Stacking.");
             }
             try
@@ -143,7 +143,7 @@ namespace ChainCrafting.Utils
             }
             catch (Exception e)
             {
-                Plugin.Logger.LogError(e.ToString());
+                Plugin.Logger.LogCatch(e);
                 Plugin.Logger.LogError("Failed to get stack size from InventoryStacking.");
             }
             return inventory.GetPickupCount(techType);
