@@ -6,7 +6,7 @@
     <AssemblyName>ChainCrafting</AssemblyName>
 	  <BepInExPluginGuid>com.lanta.ChainCrafting</BepInExPluginGuid>
 	  <BepInExPluginName>Chain Crafting</BepInExPluginName>
-	  <Version>3.1.0</Version>
+	  <Version>3.2.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>11</LangVersion>
     <RootNamespace>ChainCrafting</RootNamespace>
