@@ -1,4 +1,4 @@
-﻿using Nautilus.Extensions;
+﻿using HarmonyLib;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,7 +7,7 @@ namespace ChainCrafting.Utils
 {
     public class Interactable : HandTarget, IHandTarget
     {
-        private event Action<GUIHand> _OnHandHover;
+        private event Action<GUIHand> OnHover;
         private readonly Dictionary<(GameInput.Button Button, bool IsOnHold), Action> inputCallbacks = new();
 
         private bool IsActiveTarget 
@@ -36,8 +36,8 @@ namespace ChainCrafting.Utils
             if (!IsActiveTarget) return;
             foreach ((GameInput.Button input, _) in inputCallbacks.Keys)
             {
-                if (GameInput.GetButtonDown(input)) inputCallbacks[(input, false)]?.Invoke();
-                if (GameInput.GetButtonHeld(input)) inputCallbacks[(input, true)]?.Invoke();
+                if (GameInput.GetButtonDown(input)) inputCallbacks.GetValueSafe((input, false))?.Invoke();
+                if (GameInput.GetButtonHeld(input)) inputCallbacks.GetValueSafe((input, true))?.Invoke();
             }
         }
 
@@ -62,17 +62,17 @@ namespace ChainCrafting.Utils
 
         public void RegisterOnHandHover(Action<GUIHand> callback)
         {
-            _OnHandHover += callback;
+            OnHover += callback;
         }
 
         public void UnregisterOnHandHover(Action<GUIHand> callback)
         {
-            _OnHandHover -= callback;
+            OnHover -= callback;
         }
 
         public void OnHandHover(GUIHand hand)
         {
-            _OnHandHover?.Invoke(hand);
+            OnHover?.Invoke(hand);
         }
 
         public void OnHandClick(GUIHand hand)

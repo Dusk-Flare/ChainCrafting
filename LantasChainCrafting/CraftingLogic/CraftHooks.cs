@@ -2,7 +2,10 @@
 using ChainCrafting.uiLogic;
 using ChainCrafting.Utils;
 using HarmonyLib;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using Resources = ChainCrafting.Utils.Resources;
 
 namespace ChainCrafting.CraftingLogic
 {
@@ -10,6 +13,8 @@ namespace ChainCrafting.CraftingLogic
     public static class CraftHooks
     {
         private static Coroutine CraftRoutine { get; set; }
+        public static Queue<Resource> CraftingQueue { get; private set; } = new();
+
         [HarmonyPatch(typeof(GhostCrafter))]
         [HarmonyPatch(nameof(GhostCrafter.Craft))]
         [HarmonyPrefix]
@@ -23,9 +28,9 @@ namespace ChainCrafting.CraftingLogic
         [HarmonyPatch(typeof(GhostCrafter))]
         [HarmonyPatch(nameof(GhostCrafter.OnHandHover))]
         [HarmonyPostfix]
-        private static void OnHandHover()
+        private static void OnHandHover(GhostCrafter __instance, GUIHand hand)
         {
-            HandReticle.main.SetText(HandReticle.TextType.Use, "CraftStop", true, GameInput.Button.RightHand);
+            __instance.gameObject.GetComponent<Interactable>()?.OnHandHover(hand);
         }
 
         [HarmonyPatch(typeof(GhostCrafter))]
@@ -37,10 +42,12 @@ namespace ChainCrafting.CraftingLogic
             Plugin.Logger.LogInfo($"Added Interactable to {__instance.gameObject.name}");
             interactable.RegisterInput(GameInput.Button.RightHand, false, () =>
             {
-                if (CraftRoutine == null) return;
+                if (CraftRoutine == null && !CraftingQueue.Any()) return;
                 __instance.StopCoroutine(CraftRoutine);
+                CraftingQueue.Clear();
                 __instance.OnStateChanged(false);
             });
+            interactable.RegisterOnHandHover((_) => HandReticle.main.SetText(HandReticle.TextType.Use, "CraftStop", true, GameInput.Button.RightHand));
         }
 
         [HarmonyPatch(typeof(uGUI_CraftingMenu))]

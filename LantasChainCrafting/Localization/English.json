@@ -25,5 +25,7 @@
   "ConfigBulkCraft": "Bulk Craft Count",
   "ConfigBulkCraftDesc": "Maximum amount of items to craft when using the UpCraft and DownCraft keybinds",
 
-  "CraftStop": "Cease crafting"
+  "CraftStop": "Cease crafting",
+
+  "NotEnoughPowerMessage": "Not enough power to craft"
 }

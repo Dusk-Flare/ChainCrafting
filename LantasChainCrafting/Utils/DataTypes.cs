@@ -138,7 +138,7 @@ namespace ChainCrafting.Utils
         public Dictionary<TechType, int>.Enumerator GetEnumerator() => Table.GetEnumerator();
 
         public static List<Resource> ToList(ResourceTable resourceTable) => Resources.ListOf(resourceTable.Table);
-        public static implicit operator List<Resource>(ResourceTable resources) => resources.Table.Select(entry => new Resource(entry)).ToList();
+        public static implicit operator List<Resource>(ResourceTable resources) => ToList(resources);
         public static implicit operator ResourceTable(List<Resource> resources) => new(resources);
         public static implicit operator ResourceTable(Dictionary<TechType, int> resources) => new(resources);
 

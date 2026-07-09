@@ -39,7 +39,7 @@ namespace ChainCrafting.uiLogic
             Logic.AccountForYields(ref craftStack);
             Validate.CostOfCraft(craftStack, out ResourceTable entryCost);
             Validate.CostOfOwned(new(self.techType, CraftingInputs.CraftCount), out ResourceTable ownedCost);
-            List<Resource> resources = entryCost.ToList();
+            List<Resource> resources = entryCost;
 
             if (entryCost != null && entryCost.Contains(self.techType)) entryCost.Remove(self.techType);
             int num = -1;

@@ -27,10 +27,10 @@ namespace ChainCrafting.CraftingLogic
                 {
                     if (!CrafterLogic.ConsumeEnergy(crafter.powerRelay, 5f))
                     {
-                        ErrorMessage.AddWarning("Not enough power");
+                        ErrorMessage.AddWarning(Language.main.Get("NotEnoughPowerMessage"));
                         yield break;
                     }
-                    if(!Consume(next))
+                    if (!Consume(next))
                     {
                         ErrorMessage.AddWarning(Language.main.Get("DontHaveNeededIngredients"));
                         yield break;
