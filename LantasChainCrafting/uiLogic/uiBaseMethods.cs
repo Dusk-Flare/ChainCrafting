@@ -1,6 +1,6 @@
 ﻿using ChainCrafting.Configs;
 using ChainCrafting.CraftingLogic;
-using ChainCrafting.Utils;
+using SextantHorizon.Utils;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;

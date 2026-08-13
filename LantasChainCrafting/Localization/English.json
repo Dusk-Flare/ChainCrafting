@@ -24,8 +24,10 @@
   "ConfigOnHoldDesc": "Whether or not the \"Raw Resources\" keybind should be held down or pressed to activate",
   "ConfigBulkCraft": "Bulk Craft Count",
   "ConfigBulkCraftDesc": "Maximum amount of items to craft when using the UpCraft and DownCraft keybinds",
+  "ConfigLockerRange": "Locker Range",
+  "ConfigLockerRangeDesc": "Maximum distance from the player to check for items in containers",
 
-  "CraftStop": "Cease crafting",
+  "CraftStop": "Stop crafting",
 
   "NotEnoughPowerMessage": "Not enough power to craft"
 }

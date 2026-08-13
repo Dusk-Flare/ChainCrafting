@@ -1,4 +1,4 @@
-﻿using ChainCrafting.Utils;
+﻿using SextantHorizon.Utils;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
@@ -68,7 +68,6 @@ namespace ChainCrafting.uiLogic
             //rect.sizeDelta = new Vector2(400, 400);
             ResourceTree wawa = new(null, new(type));
             Plugin.Logger.LogInfo($"{wawa.Data}: 360 / {wawa.GetOuterRing()}");
-            wawa.GetRoot().LogTree();
 
 
             Image img = iconObj.GetComponent<Image>();

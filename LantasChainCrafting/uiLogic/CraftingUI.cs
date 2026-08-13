@@ -1,12 +1,13 @@
 ﻿using ChainCrafting.Configs;
 using ChainCrafting.CraftingLogic;
 using ChainCrafting.Utils;
+using SextantHorizon.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
-using Resources = ChainCrafting.Utils.Resources;
+using Resources = SextantHorizon.Utils.Resources;
 
 namespace ChainCrafting.uiLogic
 {
@@ -65,6 +66,7 @@ namespace ChainCrafting.uiLogic
                 TechType techType = item.Type;
                 bool canCraft = Validate.IsFulfilled(techType, CraftingInputs.CraftCount);
                 int count = Resources.PickupCount(techType) + ownedCost.AmountOf(techType);
+                if(Compatibility.ExternalResources) Plugin.Logger.LogInfo(count += Compatibility.GetLocalPickupCount(techType));
                 int amount = item.Amount;
                 int num3 = count / amount;
                 if (num < 0 || num3 < num) num = num3;
@@ -119,6 +121,7 @@ namespace ChainCrafting.uiLogic
                 int pickupCount = Resources.PickupCount(techType) + owned.AmountOf(techType);
                 int amount = ingredient.Amount;
                 bool flag = pickupCount >= amount || !GameModeUtils.RequiresIngredients();
+                if(Compatibility.ExternalResources) flag |= (pickupCount + Compatibility.GetLocalPickupCount(techType)) >= amount;
                 bool hasIngredients = false;
                 if (ingredient.Craftable) hasIngredients = Validate.IsFulfilled(techType, CraftingInputs.CraftCount);
                 Sprite sprite = SpriteManager.Get(techType);
@@ -147,6 +150,18 @@ namespace ChainCrafting.uiLogic
                     stringBuilder.Append(pickupCount);
                     stringBuilder.Append(")");
                 }
+                if(Compatibility.ExternalResources && pickupCount < amount)
+                {
+                    int externalCount = Compatibility.GetLocalPickupCount(techType);
+                    Plugin.Logger.LogInfo($"External count for {techType} is {externalCount}");
+                    if (externalCount > 0 && externalCount < amount)
+                    {
+                        if (pickupCount > 0 && pickupCount < amount) stringBuilder.Append(" |");
+                        stringBuilder.Append(" (");
+                        stringBuilder.Append(externalCount);
+                        stringBuilder.Append(")");
+                    }
+                }
                 stringBuilder.Append("</color>");
                 icons.Add(new TooltipIcon(sprite, stringBuilder.ToString()));
             }
@@ -155,7 +170,10 @@ namespace ChainCrafting.uiLogic
         public static bool ActionAvailable(uGUI_CraftingMenu.Node sender)
         {
             TreeAction action = sender.action;
-            return action == TreeAction.Expand || (action == TreeAction.Craft && CrafterLogic.IsCraftRecipeUnlocked(sender.techType) && Validate.IsFulfilled(sender.techType, Resources.Yield(sender.techType) * CraftingInputs.CraftCount));
+            TechType techType = sender.techType;
+            int craftCount = Resources.Yield(techType) * CraftingInputs.CraftCount;
+            bool craftable = Validate.IsFulfilled(techType, craftCount);
+            return action == TreeAction.Expand || (action == TreeAction.Craft && CrafterLogic.IsCraftRecipeUnlocked(techType) && craftable);
         }
     }
 }

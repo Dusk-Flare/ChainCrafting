@@ -1,14 +1,12 @@
-﻿using BepInEx.Logging;
-using ChainCrafting.Configs;
+﻿using ChainCrafting.Configs;
 using ChainCrafting.Utils;
-using System;
+using SextantHorizon.Utils;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 using UnityEngine;
-using Resources = ChainCrafting.Utils.Resources;
+using Resources = SextantHorizon.Utils.Resources;
 
 namespace ChainCrafting.CraftingLogic
 {
@@ -141,7 +139,9 @@ namespace ChainCrafting.CraftingLogic
                 Resource resource = tempStack.Pop();
                 if (resource != target)
                 {
-                    OrganisedStack(resource with { Amount = resource.PickupCount }, out Stack<Resource> componentStack);
+                    int count = resource.PickupCount;
+                    if(Compatibility.ExternalResources) count += Compatibility.GetLocalPickupCount(resource.Type);
+                    OrganisedStack(resource with { Amount = Mathf.Min(count, catalog.AmountOf(resource)) }, out Stack<Resource> componentStack);
                     AccountForYields(ref componentStack);
                     foreach (Resource item in componentStack) catalog.Subtract(item);
                 }
@@ -157,13 +157,39 @@ namespace ChainCrafting.CraftingLogic
 
         public static bool Consume(TechType techType)
         {
+            if(!GameModeUtils.RequiresIngredients()) return true;
             if (Validate.IsFulfilled(techType))
             {
-                Inventory.main.ConsumeResourcesForRecipe(techType);
+                if(Compatibility.ExternalResources) ConsumeTotalResources(techType);
+                else Inventory.main.ConsumeResourcesForRecipe(techType);
                 return true;
             }
             ErrorMessage.AddWarning(Language.main.Get("DontHaveNeededIngredients"));
             return false;
+        }
+
+        public static void ConsumeTotalResources(TechType techType)
+        {
+            if(!GameModeUtils.RequiresIngredients() || !Resources.Craftable(techType) || !Compatibility.ExternalResources) return;
+            ResourceTable components = Resources.ComponentsOf(techType);
+            ResourceTable ingredients = components.Select(r => r with { Amount = Mathf.Min(r.Amount, r.PickupCount) }).ToList();
+            ResourceTable externalIngredients = components.Select(r => r with { Amount = r.Amount - r.PickupCount }).Where(r => r.Amount > 0).ToList();
+            if (!ingredients.Any()) return;
+            foreach(Resource resource in ingredients)
+            {
+                TechType techType2 = resource.Type;
+                int count = resource.Amount;
+                while (count > 0)
+                {
+                    if (!Inventory.main.DestroyItem(techType2, true))
+                    {
+                        Plugin.Logger.LogError($"Unable to remove one '{techType2}' from player inventory to craft {techType}.");
+                    }
+                    uGUI_IconNotifier.main.Play(techType2, uGUI_IconNotifier.AnimationType.To, null);
+                    count--;
+                }
+            }
+            if(!Compatibility.ConsumeExternalResources(externalIngredients)) Plugin.Logger.LogError("Failed to consume external resources.");
         }
     }
 }

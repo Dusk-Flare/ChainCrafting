@@ -1,14 +1,12 @@
 ﻿using BepInEx;
-using BepInEx.Logging;
 using ChainCrafting.Configs;
 using ChainCrafting.uiLogic;
-using ChainCrafting.Utils;
 using HarmonyLib;
 using Nautilus.Handlers;
+using SextantHorizon;
+using SextantHorizon.Utils;
 using System.Reflection;
 using UnityEngine;
-using HarmonyLib.Tools;
-using System.Collections.Generic;
 
 namespace ChainCrafting
 {
@@ -16,9 +14,9 @@ namespace ChainCrafting
     [BepInDependency("com.snmodding.nautilus")]
     [BepInDependency("mades.redo.inventorystacking", BepInDependency.DependencyFlags.SoftDependency)]
     [BepInDependency("com.Complot69.virtualstack", BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency("OpenLockerAPI", BepInDependency.DependencyFlags.SoftDependency)]
     public class Plugin : BaseUnityPlugin
     {
-        //TODO: Add cancel button using the handreticle action.
         public new static Mercury Logger { get; private set; }
 
         private static Assembly Assembly { get; } = Assembly.GetExecutingAssembly();
@@ -36,13 +34,16 @@ namespace ChainCrafting
         {
             //Logger = base.Logger;
             Logger = new Mercury(PluginInfo.PLUGIN_NAME);
+
+            Gateway.Awake(Logger);
+
             Logger.LogInfo($"Initializing {PluginInfo.PLUGIN_GUID} v{PluginInfo.PLUGIN_VERSION}!\nAnd loading Localization!\nAnd applying Harmony patches!");
             Logger.LogInfo("Loading Localization!");
             LanguageHandler.RegisterLocalizationFolder();
-
             Logger.LogInfo("Applying Harmony patches!");
             Harmony.CreateAndPatchAll(Assembly, $"{PluginInfo.PLUGIN_GUID}");
-            OptionsPanelHandler.RegisterModOptions(Menu = new());
+            OptionsPanelHandler.RegisterModOptions(Menu = new(Config));
+            //CraftingMenu.Menu = OptionsPanelHandler.RegisterModOptions<CraftingMenu>();
             CraftingHelper = EnumHandler.AddEntry<PDATab>("CraftingHelper");
             CraftingInputs.OnCrftingHelperOpen += () =>
             {

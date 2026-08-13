@@ -1,0 +1,3 @@
+[submodule "SextantHorison"]
+	path = SextantHorison
+	url = https://github.com/Dusk-Flare/SextantHorizon.git

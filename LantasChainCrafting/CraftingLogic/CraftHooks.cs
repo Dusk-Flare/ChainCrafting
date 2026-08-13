@@ -1,11 +1,9 @@
-﻿using ChainCrafting.Configs;
-using ChainCrafting.uiLogic;
-using ChainCrafting.Utils;
+﻿using ChainCrafting.uiLogic;
 using HarmonyLib;
+using SextantHorizon.Utils;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Resources = ChainCrafting.Utils.Resources;
 
 namespace ChainCrafting.CraftingLogic
 {
@@ -39,7 +37,7 @@ namespace ChainCrafting.CraftingLogic
         private static void Initialize(GhostCrafter __instance)
         {
             Interactable interactable = __instance.gameObject.EnsureComponent<Interactable>();
-            Plugin.Logger.LogInfo($"Added Interactable to {__instance.gameObject.name}");
+			Plugin.Logger.LogInfo($"Added Interactable to {__instance.gameObject.name}");
             interactable.RegisterInput(GameInput.Button.RightHand, false, () =>
             {
                 if (CraftRoutine == null && !CraftingQueue.Any()) return;

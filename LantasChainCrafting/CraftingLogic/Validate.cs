@@ -1,10 +1,12 @@
 ﻿using ChainCrafting.Configs;
 using ChainCrafting.Utils;
+using SextantHorizon.Utils;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using UnityEngine;
-using Resources = ChainCrafting.Utils.Resources;
+using Resources = SextantHorizon.Utils.Resources;
 
 namespace ChainCrafting.CraftingLogic
 {
@@ -16,8 +18,7 @@ namespace ChainCrafting.CraftingLogic
             if(!Resources.Craftable(techType)) return false;
             Logic.ChainCraft(new(techType, count), out Stack<Resource> craftStack);
             CostOfCraft(craftStack, out ResourceTable entryCost);
-            bool craftable = ValidateCraft(entryCost);
-            return craftable;
+            return ValidateCraft(entryCost);
         }
 
         public static void CostOfCraft(Stack<Resource> craftStack, out ResourceTable entryCost)
@@ -52,11 +53,13 @@ namespace ChainCrafting.CraftingLogic
 
         private static bool ValidateCraft(ResourceTable entryCost)
         {
-            foreach (Resource material in entryCost)
+            if (Compatibility.ExternalResources)
             {
-                if (material.Amount > material.PickupCount) return false;
+                ResourceTable externalNeeded = entryCost.Select(r => r with { Amount = r.Amount - r.PickupCount }).Where(r => r.Amount > 0).ToList();
+                Plugin.Logger.LogInfo($"External needed: \n{externalNeeded}");
+                return entryCost.All(material => material.PickupCount >= material.Amount) || Compatibility.ValidateExternal(externalNeeded);
             }
-            return true;
+            return entryCost.All(material => material.PickupCount >= material.Amount);
         }
     }
 }

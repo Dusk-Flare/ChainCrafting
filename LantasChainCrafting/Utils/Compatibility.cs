@@ -1,152 +1,68 @@
-﻿using HarmonyLib;
+﻿using SextantHorizon.Utils;
 using System;
-using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
-using UnityEngine;
 
 namespace ChainCrafting.Utils
 {
     public static class Compatibility
     {
-        private static bool _checkedMRInventoryStack = false;
-        private static bool _mrInventoryStack = false;
-        public static bool MRInventoryStack
+        public static bool ExternalResources => OpenLockerAPI;
+        public static float ExternalResourceRange { get; set; } = 30f;
+        private static bool _checkedOpenLockerLib = false;
+        private static bool _openLockerAPI = false;
+        public static bool OpenLockerAPI
         {
             get
             {
-                if (!_checkedMRInventoryStack)
+                if (!_checkedOpenLockerLib)
                 {
-                    _mrInventoryStack = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("mades.redo.inventorystacking");
-                    Plugin.Logger.LogInfo($"Mades Redo Inventory Stacking {( _mrInventoryStack ? "has been" : "has not been" )} detected");
-                    _checkedMRInventoryStack = true;
+                    _openLockerAPI = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("OpenLockerAPI");
+                    Plugin.Logger.LogInfo($"Open Locker API {( _openLockerAPI ? "has been" : "has not been" )} detected");
+                    _checkedOpenLockerLib = true;
                 }
-                return _mrInventoryStack;
+                return _openLockerAPI;
             }
         }
-        private static bool _checkedInventoryStacking = false;
-        private static bool _inventoryStacking = false;
-        public static bool InventoryStacking
-        {
-            get
-            {
-                if (!_checkedInventoryStacking)
-                {
-                    _inventoryStacking = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("com.Complot69.virtualstack");
-                    Plugin.Logger.LogInfo($"Inventory Resource Stacking {(_inventoryStacking ? "has been" : "has not been")} detected");
-                    _checkedInventoryStacking = true;
-                }
-                return _inventoryStacking;
-            }
-        }
-
-        public static Assembly GetAssembly(string assemblyName)
+        public static bool ValidateExternal(ResourceTable resources) => resources.All(r => GetLocalPickupCount(r) >= r.Amount);
+        public static int GetLocalPickupCount(Resource resource) => GetLocalPickupCount(resource.Type);
+        public static int GetLocalPickupCount(TechType techType)
         {
             try
             {
-                foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+                if (OpenLockerAPI)
                 {
-                    if (assembly.FullName.StartsWith(assemblyName)) return assembly;
+                    MethodInfo getLocalPickupCount = Reflection.GetMethod("OpenLockerAPI", "OpenLockerAPI.Logic", "GetLocalPickupCount");
+                    return (int) getLocalPickupCount.Invoke(null, new object[] { techType, ExternalResourceRange });
                 }
             }
             catch (Exception e)
             {
                 Plugin.Logger.LogCatch(e);
+                Plugin.Logger.LogError("Failed to check for external resource from Open Locker API.");
             }
-            Plugin.Logger.LogError($"Failed to find assembly {assemblyName}");
-            return null;
+            return 0;
         }
 
-        public static Type GetType(string assemblyName, string typeName)
+        public static bool ConsumeExternalResources(ResourceTable resources) => resources.All(ConsumeExternalResources);
+        public static bool ConsumeExternalResources(Resource resource)
         {
             try
             {
-                Assembly assembly = GetAssembly(assemblyName);
-                return assembly.GetType(typeName);
-            }
-            catch (Exception e)
-            {
-                Plugin.Logger.LogCatch(e);
-            }
-            Plugin.Logger.LogError($"Failed to find assembly {assemblyName} for type {typeName}");
-            return null;
-        }
-
-        public static MethodInfo GetMethod(string assemblyName, string typeName, string methodName)
-        {
-            try
-            {
-                Type type = GetType(assemblyName, typeName);
-                return type.GetMethod(methodName);
-            }
-            catch(Exception e)
-            {
-                Plugin.Logger.LogCatch(e);
-            }
-            Plugin.Logger.LogError($"Failed to find method {methodName} in type {typeName} for assembly {assemblyName}");
-            return null;
-        }
-
-        public static FieldInfo GetField(string assemblyName, string typeName, string fieldName)
-        {
-            try
-            {
-                Assembly assembly = GetAssembly(assemblyName);
-                Type type = assembly.GetType(typeName);
-                return AccessTools.Field(type, fieldName);
-            }
-            catch(Exception e)
-            {
-                Plugin.Logger.LogCatch(e);
-            }
-            Plugin.Logger.LogError($"Failed to find field {fieldName} in type {typeName} for assembly {assemblyName}");
-            return null;
-        }
-
-        public static int ResourceCount(TechType techType)
-        {
-            Inventory inventory = Inventory.main;
-            try
-            {
-                if (MRInventoryStack)
+                if (OpenLockerAPI)
                 {
-                    Type stackType = GetType("MR_InventoryStacking", "MR_InventoryStacking.MRStackData");
-                    FieldInfo amountField = AccessTools.Field(stackType, "amount");
-                    int units = 0;
-                    foreach (InventoryItem item in inventory.container)
-                    {
-                        if (item.techType != techType) continue;
-                        Pickupable pickupable = item.item;
-                        Component stack = pickupable.GetComponent(stackType);
-                        if (stack == null) return inventory.GetPickupCount(techType);
-                        int amount = (int) amountField.GetValue(stack);
-                        units += stack != null && amount >= 1 ? amount : 1;
-                    }
-                    return units;
-                }
-            } 
-            catch(Exception e)
-            {
-                Plugin.Logger.LogCatch(e);
-                Plugin.Logger.LogError("Failed to get stack size from MR Inventory Stacking.");
-            }
-            try
-            {
-                if (InventoryStacking)
-                {
-                    Type mainSaveData = GetType("PruebaDificultad", "InventoryStacks.ModSaveData");
-                    Type virtualStackPlugin = GetType("PruebaDificultad", "InventoryStacks.VirtualStackPlugin");
-                    PropertyInfo saveData = virtualStackPlugin?.GetProperty("MainSaveData");
-                    FieldInfo extras = mainSaveData?.GetField("extras");
-                    Dictionary<TechType, int> table = (Dictionary<TechType, int>) extras.GetValue(saveData.GetValue(null));
-                    if (table.TryGetValue(techType, out int count)) return count + inventory.GetPickupCount(techType);
+                    MethodInfo consumeLocalResource = Reflection.GetMethod("OpenLockerAPI", "OpenLockerAPI.Logic", "ConsumeLocalResource");
+                    bool consumed = (bool)consumeLocalResource.Invoke(null, new object[] { resource.Type, resource.Amount, ExternalResourceRange });
+                    if(!consumed) Plugin.Logger.LogError($"Failed to consume {resource}");
+                    return consumed;
                 }
             }
             catch (Exception e)
             {
                 Plugin.Logger.LogCatch(e);
-                Plugin.Logger.LogError("Failed to get stack size from InventoryStacking.");
+                Plugin.Logger.LogError("Failed to consume external resource from Open Locker API.");
             }
-            return inventory.GetPickupCount(techType);
+            return false;
         }
     }
 }
