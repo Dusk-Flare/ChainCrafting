@@ -1,5 +1,5 @@
 ﻿using ChainCrafting.Configs;
-using ChainCrafting.Utils;
+using ChainCrafting.Compatibility;
 using SextantHorizon.Utils;
 using System;
 using System.Collections.Generic;
@@ -12,13 +12,13 @@ namespace ChainCrafting.CraftingLogic
 {
     internal class Validate
     {
-        public static bool IsFulfilled(TechType techType, int count = 1)
+        public static bool IsFulfilled(TechType techType, int count = 1, Vector3? resourceOrigin = null)
         {
             if (!GameModeUtils.RequiresIngredients()) return true;
             if(!Resources.Craftable(techType)) return false;
             Logic.ChainCraft(new(techType, count), out Stack<Resource> craftStack);
             CostOfCraft(craftStack, out ResourceTable entryCost);
-            return ValidateCraft(entryCost);
+            return ValidateCraft(entryCost, resourceOrigin);
         }
 
         public static void CostOfCraft(Stack<Resource> craftStack, out ResourceTable entryCost)
@@ -51,13 +51,12 @@ namespace ChainCrafting.CraftingLogic
             }
         }
 
-        private static bool ValidateCraft(ResourceTable entryCost)
+        private static bool ValidateCraft(ResourceTable entryCost, Vector3? resourceOrigin = null)
         {
-            if (Compatibility.ExternalResources)
+            if (Manager.ExternalResources)
             {
                 ResourceTable externalNeeded = entryCost.Select(r => r with { Amount = r.Amount - r.PickupCount }).Where(r => r.Amount > 0).ToList();
-                Plugin.Logger.LogInfo($"External needed: \n{externalNeeded}");
-                return entryCost.All(material => material.PickupCount >= material.Amount) || Compatibility.ValidateExternal(externalNeeded);
+                return entryCost.All(material => material.PickupCount >= material.Amount) || Manager.ValidateExternal(externalNeeded, resourceOrigin);
             }
             return entryCost.All(material => material.PickupCount >= material.Amount);
         }

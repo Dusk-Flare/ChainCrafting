@@ -1,5 +1,5 @@
 ﻿using ChainCrafting.Configs;
-using ChainCrafting.Utils;
+using ChainCrafting.Compatibility;
 using SextantHorizon.Utils;
 using System.Collections;
 using System.Collections.Generic;
@@ -17,6 +17,7 @@ namespace ChainCrafting.CraftingLogic
             ChainCraft(new(techType, Resources.Yield(techType) * CraftingInputs.CraftCount), out Stack<Resource> craftStack);
             Plugin.Logger.LogInfo($"Crafting {techType}, Yield of {Resources.Yield(techType)} and count of {CraftingInputs.CraftCount}? {craftStack.Any()}");
             CraftingInputs.CraftCount = 1;
+            Vector3 crafterPos = crafter.transform.position;
             while (craftStack.Any())
             {
                 Resource item = craftStack.Pop();
@@ -28,7 +29,7 @@ namespace ChainCrafting.CraftingLogic
                         ErrorMessage.AddWarning(Language.main.Get("NotEnoughPowerMessage"));
                         yield break;
                     }
-                    if (!Consume(next))
+                    if (!Consume(next, crafterPos))
                     {
                         ErrorMessage.AddWarning(Language.main.Get("DontHaveNeededIngredients"));
                         yield break;
@@ -39,6 +40,8 @@ namespace ChainCrafting.CraftingLogic
                     {
                         if (!crafter._logic.inProgress) crafter.OnStateChanged(false);
                         yield return null;
+                        bool inRange = crafter.PlayerIsInRange(crafter.closeDistance) || crafter.pickupOutOfRange;
+                        if (Manager.ExternalResources && !inRange) crafter.TryLocalPickup();
                     }
                     crafter.OnStateChanged(false);
                 }
@@ -77,7 +80,7 @@ namespace ChainCrafting.CraftingLogic
 
         public static void OrganizeCraftStack(ref Stack<Resource> craftStack)
         {
-            ResourceTable catalog = new();
+            ResourceTable catalog = [];
             Stack<Resource> tempStack = new();
             while (craftStack.Any())
             {
@@ -94,7 +97,7 @@ namespace ChainCrafting.CraftingLogic
         public static void AccountForYields(ref Stack<Resource> craftStack)
         {
             if (!craftStack.Any()) return;
-            ResourceTable catalog = new();
+            ResourceTable catalog = [];
             Stack<Resource> tempStack = new();
             Queue<Resource> processingQueue = new();
             while (craftStack.Any())
@@ -106,9 +109,9 @@ namespace ChainCrafting.CraftingLogic
             while (tempStack.Any())
             {
                 Resource resource = tempStack.Pop();
-                foreach(Resource component in resource.Components)
+                foreach (Resource component in resource.Components)
                 {
-                    if(!component.Craftable) continue;
+                    if (!component.Craftable) continue;
                     int requiredAmount = (int)Mathf.Ceil((float)catalog.AmountOf(resource) / resource.Yield) * catalog.AmountOf(component);
                     catalog.Subtract(component.Type, Mathf.Max(0, component.Amount - requiredAmount));
                 }
@@ -118,14 +121,14 @@ namespace ChainCrafting.CraftingLogic
             {
                 TechType item = processingQueue.Dequeue().Type;
                 Resource resource = catalog[item];
-                if(resource != null) craftStack.Push(resource);
+                if (resource != null) craftStack.Push(resource);
             }
         }
 
         public static void RemoveOwned(TechType target, ref Stack<Resource> craftStack)
         {
             if (!craftStack.Any()) return;
-            ResourceTable catalog = new();
+            ResourceTable catalog = [];
             Stack<Resource> tempStack = new();
             Queue<Resource> processingQueue = new();
             while (craftStack.Any())
@@ -134,13 +137,13 @@ namespace ChainCrafting.CraftingLogic
                 catalog.Set(resource);
                 tempStack.Push(resource);
             }
-            while(tempStack.Any())
+            while (tempStack.Any())
             {
                 Resource resource = tempStack.Pop();
                 if (resource != target)
                 {
                     int count = resource.PickupCount;
-                    if(Compatibility.ExternalResources) count += Compatibility.GetLocalPickupCount(resource.Type);
+                    if (Manager.ExternalResources) count += Manager.GetLocalPickupCount(resource.Type);
                     OrganisedStack(resource with { Amount = Mathf.Min(count, catalog.AmountOf(resource)) }, out Stack<Resource> componentStack);
                     AccountForYields(ref componentStack);
                     foreach (Resource item in componentStack) catalog.Subtract(item);
@@ -155,12 +158,12 @@ namespace ChainCrafting.CraftingLogic
             }
         }
 
-        public static bool Consume(TechType techType)
+        public static bool Consume(TechType techType, Vector3? consumeOrigin = null)
         {
-            if(!GameModeUtils.RequiresIngredients()) return true;
-            if (Validate.IsFulfilled(techType))
+            if (!GameModeUtils.RequiresIngredients()) return true;
+            if (Validate.IsFulfilled(techType, resourceOrigin: consumeOrigin))
             {
-                if(Compatibility.ExternalResources) ConsumeTotalResources(techType);
+                if (Manager.ExternalResources) ConsumeTotalResources(techType, consumeOrigin);
                 else Inventory.main.ConsumeResourcesForRecipe(techType);
                 return true;
             }
@@ -168,14 +171,14 @@ namespace ChainCrafting.CraftingLogic
             return false;
         }
 
-        public static void ConsumeTotalResources(TechType techType)
+        public static void ConsumeTotalResources(TechType techType, Vector3? consumeOrigin = null)
         {
-            if(!GameModeUtils.RequiresIngredients() || !Resources.Craftable(techType) || !Compatibility.ExternalResources) return;
+            if (!GameModeUtils.RequiresIngredients() || !Resources.Craftable(techType) || !Manager.ExternalResources) return;
             ResourceTable components = Resources.ComponentsOf(techType);
             ResourceTable ingredients = components.Select(r => r with { Amount = Mathf.Min(r.Amount, r.PickupCount) }).ToList();
             ResourceTable externalIngredients = components.Select(r => r with { Amount = r.Amount - r.PickupCount }).Where(r => r.Amount > 0).ToList();
             if (!ingredients.Any()) return;
-            foreach(Resource resource in ingredients)
+            foreach (Resource resource in ingredients)
             {
                 TechType techType2 = resource.Type;
                 int count = resource.Amount;
@@ -189,7 +192,111 @@ namespace ChainCrafting.CraftingLogic
                     count--;
                 }
             }
-            if(!Compatibility.ConsumeExternalResources(externalIngredients)) Plugin.Logger.LogError("Failed to consume external resources.");
+            if (!Manager.ConsumeExternalResources(externalIngredients, consumeOrigin)) Plugin.Logger.LogError("Failed to consume external resources.");
+        }
+
+        public static void TryLocalPickup(this GhostCrafter crafter)
+        {
+            CrafterLogic logic = crafter._logic;
+            if (!logic.pickingUp)
+            {
+                logic.pickupRoutine = crafter.StartCoroutine(crafter.TryLocalPickupAsync());
+            }
+        }
+
+        private static IEnumerator TryLocalPickupAsync(this GhostCrafter crafter)
+        {
+            CrafterLogic logic = crafter._logic;
+            if (logic.craftingTechType == TechType.None || logic.progress < 1f) yield break;
+            ReadOnlyCollection<TechType> linkedItems = TechData.GetLinkedItems(logic.craftingTechType);
+            int linkedItemsCount = (linkedItems != null) ? linkedItems.Count : 0;
+            logic.pickingUp = true;
+            bool interrupt = false;
+            while (!interrupt)
+            {
+                TechType techType = logic.craftingTechType;
+                if (logic.linkedIndex != -1)
+                {
+                    techType = ((logic.linkedIndex < linkedItemsCount) ? linkedItems[logic.linkedIndex] : TechType.None);
+                }
+                while (logic.numCrafted > 0)
+                {
+                    TaskResult<bool> result = new();
+                    yield return crafter.TryPickupLocalSingleAsync(techType, result);
+                    if (!result.Get())
+                    {
+                        logic.pickingUp = false;
+                        yield break;
+                    }
+                    logic.numCrafted--;
+                }
+                if (logic.numCrafted == 0)
+                {
+                    logic.linkedIndex++;
+                    if (logic.linkedIndex < linkedItemsCount)
+                    {
+                        logic.numCrafted = 1;
+                        techType = linkedItems[logic.linkedIndex];
+                        logic.NotifyChanged(techType);
+                    }
+                    else
+                    {
+                        interrupt = true;
+                    }
+                }
+            }
+            logic.pickingUp = false;
+            logic.ResetCrafter();
+            yield break;
+        }
+
+        private static IEnumerator TryPickupLocalSingleAsync(this GhostCrafter crafter, TechType techType, IOut<bool> result)
+        {
+            CrafterLogic logic = crafter._logic;
+            bool overrideTech = false;
+            CoroutineTask<GameObject> request = CraftData.GetPrefabForTechTypeAsync(techType, true);
+            yield return request;
+            GameObject gameObject = request.GetResult();
+            if (gameObject == null)
+            {
+                gameObject = global::Utils.genericLootPrefab;
+                overrideTech = true;
+            }
+            if (gameObject == null)
+            {
+                Debug.LogErrorFormat("Can't find prefab for TechType.{0}", [techType]);
+                result.Set(true);
+                yield break;
+            }
+
+            Pickupable component = gameObject.GetComponent<Pickupable>();
+            if (component == null)
+            {
+                Debug.LogErrorFormat("Can't find Pickupable component on prefab for TechType.{0}", [techType]);
+                result.Set(true);
+                yield break;
+            }
+
+            Vector2int itemSize = TechData.GetItemSize(component.GetTechType());
+            if (!Manager.HasRoomForExternalResource(itemSize.x, itemSize.y, crafter.transform.position))
+            {
+                ErrorMessage.AddMessage(Language.main.Get("NearbyContainersFull"));
+                result.Set(false);
+                yield break;
+            }
+
+            GameObject gameObject2 = Object.Instantiate(gameObject);
+            gameObject2.SetActive(false);
+            component = gameObject2.GetComponent<Pickupable>();
+            if (overrideTech)
+            {
+                component.SetTechTypeOverride(techType, true);
+            }
+            CrafterLogic.NotifyCraftEnd(gameObject2, logic.craftingTechType);
+            bool pickupSuccess = Manager.DepositExternalResource(new(component), crafter.transform.position);
+            if (pickupSuccess) logic.NotifyPickup(gameObject2);
+            result.Set(pickupSuccess);
+            yield break;
         }
     }
 }

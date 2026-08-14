@@ -1,6 +1,6 @@
 ﻿using ChainCrafting.Configs;
 using ChainCrafting.CraftingLogic;
-using ChainCrafting.Utils;
+using ChainCrafting.Compatibility;
 using SextantHorizon.Utils;
 using System;
 using System.Collections.Generic;
@@ -66,7 +66,7 @@ namespace ChainCrafting.uiLogic
                 TechType techType = item.Type;
                 bool canCraft = Validate.IsFulfilled(techType, CraftingInputs.CraftCount);
                 int count = Resources.PickupCount(techType) + ownedCost.AmountOf(techType);
-                if(Compatibility.ExternalResources) Plugin.Logger.LogInfo(count += Compatibility.GetLocalPickupCount(techType));
+                if(Manager.ExternalResources) Plugin.Logger.LogInfo(count += Manager.GetLocalPickupCount(techType));
                 int amount = item.Amount;
                 int num3 = count / amount;
                 if (num < 0 || num3 < num) num = num3;
@@ -121,7 +121,7 @@ namespace ChainCrafting.uiLogic
                 int pickupCount = Resources.PickupCount(techType) + owned.AmountOf(techType);
                 int amount = ingredient.Amount;
                 bool flag = pickupCount >= amount || !GameModeUtils.RequiresIngredients();
-                if(Compatibility.ExternalResources) flag |= (pickupCount + Compatibility.GetLocalPickupCount(techType)) >= amount;
+                if(Manager.ExternalResources) flag |= (pickupCount + Manager.GetLocalPickupCount(techType)) >= amount;
                 bool hasIngredients = false;
                 if (ingredient.Craftable) hasIngredients = Validate.IsFulfilled(techType, CraftingInputs.CraftCount);
                 Sprite sprite = SpriteManager.Get(techType);
@@ -150,9 +150,9 @@ namespace ChainCrafting.uiLogic
                     stringBuilder.Append(pickupCount);
                     stringBuilder.Append(")");
                 }
-                if(Compatibility.ExternalResources && pickupCount < amount)
+                if(Manager.ExternalResources && pickupCount < amount)
                 {
-                    int externalCount = Compatibility.GetLocalPickupCount(techType);
+                    int externalCount = Manager.GetLocalPickupCount(techType);
                     Plugin.Logger.LogInfo($"External count for {techType} is {externalCount}");
                     if (externalCount > 0 && externalCount < amount)
                     {
@@ -167,13 +167,16 @@ namespace ChainCrafting.uiLogic
             }
         }
 
-        public static bool ActionAvailable(uGUI_CraftingMenu.Node sender)
+        public static bool ActionAvailable(uGUI_CraftingMenu.Node sender, Vector3 senderPos)
         {
             TreeAction action = sender.action;
             TechType techType = sender.techType;
             int craftCount = Resources.Yield(techType) * CraftingInputs.CraftCount;
-            bool craftable = Validate.IsFulfilled(techType, craftCount);
-            return action == TreeAction.Expand || (action == TreeAction.Craft && CrafterLogic.IsCraftRecipeUnlocked(techType) && craftable);
+            //bool playerCenter = Validate.IsFulfilled(techType, craftCount);
+            bool craftable = Validate.IsFulfilled(techType, craftCount, senderPos);
+            bool result = action == TreeAction.Expand || (action == TreeAction.Craft && CrafterLogic.IsCraftRecipeUnlocked(techType) && craftable);
+            //Plugin.Logger.LogInfo($"ActionAvailable: {action} for {craftCount} {techType} is {result} because craftable is {craftable} at {senderPos}, player center would be {playerCenter}");
+            return result;
         }
     }
 }

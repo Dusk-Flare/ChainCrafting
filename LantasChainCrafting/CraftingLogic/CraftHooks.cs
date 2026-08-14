@@ -53,7 +53,7 @@ namespace ChainCrafting.CraftingLogic
         [HarmonyPostfix]
         private static void ActionAvailable(uGUI_CraftingMenu __instance, uGUI_CraftingMenu.Node sender, ref bool __result)
         {
-            if (__instance.client is GhostCrafter) __result = CraftingUI.ActionAvailable(sender);
+            if (__instance.client is GhostCrafter) __result = CraftingUI.ActionAvailable(sender, (__instance.client as GhostCrafter).transform.position);
         }
     }
 }

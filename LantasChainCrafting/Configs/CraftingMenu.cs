@@ -1,5 +1,5 @@
 ﻿using BepInEx.Configuration;
-using ChainCrafting.Utils;
+using ChainCrafting.Compatibility;
 using Nautilus.Options;
 using UnityEngine;
 
@@ -26,17 +26,17 @@ namespace ChainCrafting.Configs
             ModSliderOption CraftCount = bulkCraftConfig.ToModSliderOption(minValue: 1, maxValue: 50, step: 1, floatFormat: "{0:F0}");
             CraftCount.OnChanged += (sender, SliderOnChange) => 
             {
-                UpperBound = (int)SliderOnChange.Value;
+                UpperBound = Mathf.Max(1, (int) SliderOnChange.Value);
                 CraftingInputs.CraftCount = Mathf.Min(CraftingInputs.CraftCount, UpperBound);
             };
             AddItem(CraftCount);
 
 
-            if(Compatibility.ExternalResources)
+            if(Manager.ExternalResources)
             {
                 ConfigEntry<float> lockerRangeConfig = _configFile.Bind("General.Sliders", Language.main.Get("ConfigLockerRange"), 30f, Language.main.Get("ConfigLockerRangeDesc"));
                 ModSliderOption LockerRange = lockerRangeConfig.ToModSliderOption(minValue: 1, maxValue: 90, step: 1, floatFormat: "{0:F0}");
-                LockerRange.OnChanged += (sender, SliderOnChange) => Compatibility.ExternalResourceRange = SliderOnChange.Value;
+                LockerRange.OnChanged += (sender, SliderOnChange) => Manager.ExternalResourceRange = SliderOnChange.Value;
                 AddItem(LockerRange);
             }
         }
