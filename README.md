@@ -4,6 +4,8 @@ Tired of converting all those raw resources for a single recipe?\
 Then this is the mod you want! Chain Crafting does all that for you! \
 It allows you to automatically queue up the entire crafting tree and not worry about the required items, just let the crafter's internal systems deal with it for you
 
+# **ADDONS**
+When OpenLockerAPI is installed, Chain Crafting is able to use items from lockers to craft recipes and will automatically deposit the results into a container if the player is not nearby!
 
 # **Main features**
 Crafting queue takes into account items in the inventory\
