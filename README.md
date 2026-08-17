@@ -21,7 +21,7 @@ Nautilus is required to run this mod
 # **Mod testers**
 Thank you so much to Naka (Discord) for constantly helping out with testing the mod
 
-# **Shout outs**
+# **Shoutouts**
 Thank you @EldritchCarMaker (Discord) for all of the technical help\
 Thank you @Kallie23 (Discord) for the thumbnail image provided on this mod page\
 Thank you @Pritace (Discord) for the motivation to keep going when i was about to give up\
