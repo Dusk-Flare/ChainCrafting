@@ -17,7 +17,7 @@ namespace ChainCrafting.uiLogic
         {
             if (!displayMissing)
             {
-                GetCraftingStatus(Resources.ComponentsOf(type).Select(resource => resource with { Amount = resource.Amount * CraftingInputs.CraftCount }).ToList(), new(), icons);
+                GetCraftingStatus([.. Resources.ComponentsOf(type).Select(resource => resource with { Amount = resource.Amount * CraftingInputs.CraftCount })], [], icons);
                 return;
             }
             Resource target = new(type, CraftingInputs.CraftCount);
@@ -171,15 +171,8 @@ namespace ChainCrafting.uiLogic
         {
             TreeAction action = sender.action;
             TechType techType = sender.techType;
-            int craftCount = CraftingInputs.CraftCount;
-            bool craftable = Validate.IsFulfilled(techType, craftCount, senderPos);
-            bool result = action == TreeAction.Expand || (action == TreeAction.Craft && CrafterLogic.IsCraftRecipeUnlocked(techType) && craftable);
-            Plugin.Logger.LogInfo(
-                $"Action {(result ? "Available" : "Not Available")}?\n" +
-                $"Due to {craftCount} {techType} being {(craftable ? "fulfilled" : "not fulfilled")}" +
-                $"At {senderPos}"
-                );
-            return result;
+            bool craftable = Validate.IsFulfilled(techType, CraftingInputs.CraftCount, senderPos);
+            return action == TreeAction.Expand || (action == TreeAction.Craft && CrafterLogic.IsCraftRecipeUnlocked(techType) && craftable);
         }
     }
 }

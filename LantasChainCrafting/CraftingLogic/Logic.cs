@@ -15,7 +15,6 @@ namespace ChainCrafting.CraftingLogic
         public static IEnumerator Craft(GhostCrafter crafter, TechType techType)
         {
             ChainCraft(new(techType, CraftingInputs.CraftCount), out Stack<Resource> craftStack);
-            Plugin.Logger.LogInfo($"Crafting {techType}, Yield of {Resources.Yield(techType)} and count of {CraftingInputs.CraftCount}? {craftStack.Any()}");
             CraftingInputs.CraftCount = 1;
             Vector3 crafterPos = crafter.transform.position;
             while (craftStack.Any())

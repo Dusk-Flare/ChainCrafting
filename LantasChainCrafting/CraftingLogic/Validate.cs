@@ -18,9 +18,7 @@ namespace ChainCrafting.CraftingLogic
             if(!Resources.Craftable(techType)) return false;
             Logic.ChainCraft(new(techType, count), out Stack<Resource> craftStack);
             CostOfCraft(craftStack, out ResourceTable entryCost);
-            bool isValid = ValidateCraft(entryCost, resourceOrigin);
-            Plugin.Logger.LogInfo($"{(isValid ? "Valid" : "Invalid")} craft for {techType} with count {count}. \n\nEntry cost: \n{entryCost}");
-            return isValid;
+            return ValidateCraft(entryCost, resourceOrigin);
         }
 
         public static void CostOfCraft(Stack<Resource> craftStack, out ResourceTable entryCost)
