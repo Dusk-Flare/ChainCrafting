@@ -32,7 +32,6 @@ namespace ChainCrafting
         public static PDATab CraftingHelper;
         private void Awake()
         {
-            //Logger = base.Logger;
             Logger = new Mercury(PluginInfo.PLUGIN_NAME);
 
             Gateway.Awake(Logger);
@@ -42,8 +41,22 @@ namespace ChainCrafting
             LanguageHandler.RegisterLocalizationFolder();
             Logger.LogInfo("Applying Harmony patches!");
             Harmony.CreateAndPatchAll(Assembly, $"{PluginInfo.PLUGIN_GUID}");
+
             OptionsPanelHandler.RegisterModOptions(Menu = new(Config));
-            //CraftingMenu.Menu = OptionsPanelHandler.RegisterModOptions<CraftingMenu>();
+
+            RegisterCraftingHelperTab();
+
+            CraftingInputs.OnRawResourcesUpdate += () => Logger.LogInfo($"Missing Craft: {CraftingInputs.RawResourcesEnabled}");
+            Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
+        }
+
+        private void Update()
+        {
+            CraftingInputs.Update();
+        }
+
+        private void RegisterCraftingHelperTab() 
+        { 
             CraftingHelper = EnumHandler.AddEntry<PDATab>("CraftingHelper");
             CraftingInputs.OnCrftingHelperOpen += () =>
             {
@@ -52,10 +65,7 @@ namespace ChainCrafting
                 if(pda.isOpen) 
                 { 
                     Logger.LogInfo("PDA is already open, opening Crafting Helper tab");
-                    if(tempType != TechType.None)
-                    { 
-                        uGUI_CraftingHelper.TreeType = tempType; 
-                    }
+                    if(tempType != TechType.None) uGUI_CraftingHelper.TreeType = tempType; 
                     if(pda.ui.currentTabType != CraftingHelper) pda.ui.OpenTab(CraftingHelper);
                     else pda.Close();
                 }
@@ -65,16 +75,6 @@ namespace ChainCrafting
                     pda.Open(CraftingHelper);
                 }
             };
-            CraftingInputs.OnRawResourcesUpdate += () =>
-            {
-                Logger.LogInfo($"Missing Craft: {CraftingInputs.RawResourcesEnabled}");
-            };
-            Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
-        }
-
-        private void Update()
-        {
-            CraftingInputs.Update();
         }
     }
 }

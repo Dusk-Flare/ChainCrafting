@@ -7,7 +7,7 @@
     <AssemblyName>ChainCrafting</AssemblyName>
 	  <BepInExPluginGuid>com.lanta.ChainCrafting</BepInExPluginGuid>
 	  <BepInExPluginName>Chain Crafting</BepInExPluginName>
-	  <Version>3.3.0</Version>
+	  <Version>3.3.1</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>14</LangVersion>
     <RootNamespace>ChainCrafting</RootNamespace>
@@ -18,7 +18,16 @@
     </RestoreAdditionalProjectSources>
     
     <AssemblyTitle>ChainCrafting</AssemblyTitle>
+    
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\README.md">
+      <Pack>True</Pack>
+      <PackagePath>\</PackagePath>
+    </None>
+  </ItemGroup>
 	
   <ItemGroup>
     <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all" />

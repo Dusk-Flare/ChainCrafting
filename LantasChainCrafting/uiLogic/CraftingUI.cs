@@ -171,11 +171,14 @@ namespace ChainCrafting.uiLogic
         {
             TreeAction action = sender.action;
             TechType techType = sender.techType;
-            int craftCount = Resources.Yield(techType) * CraftingInputs.CraftCount;
-            //bool playerCenter = Validate.IsFulfilled(techType, craftCount);
+            int craftCount = CraftingInputs.CraftCount;
             bool craftable = Validate.IsFulfilled(techType, craftCount, senderPos);
             bool result = action == TreeAction.Expand || (action == TreeAction.Craft && CrafterLogic.IsCraftRecipeUnlocked(techType) && craftable);
-            //Plugin.Logger.LogInfo($"ActionAvailable: {action} for {craftCount} {techType} is {result} because craftable is {craftable} at {senderPos}, player center would be {playerCenter}");
+            Plugin.Logger.LogInfo(
+                $"Action {(result ? "Available" : "Not Available")}?\n" +
+                $"Due to {craftCount} {techType} being {(craftable ? "fulfilled" : "not fulfilled")}" +
+                $"At {senderPos}"
+                );
             return result;
         }
     }

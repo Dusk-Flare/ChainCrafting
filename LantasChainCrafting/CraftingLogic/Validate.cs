@@ -18,12 +18,14 @@ namespace ChainCrafting.CraftingLogic
             if(!Resources.Craftable(techType)) return false;
             Logic.ChainCraft(new(techType, count), out Stack<Resource> craftStack);
             CostOfCraft(craftStack, out ResourceTable entryCost);
-            return ValidateCraft(entryCost, resourceOrigin);
+            bool isValid = ValidateCraft(entryCost, resourceOrigin);
+            Plugin.Logger.LogInfo($"{(isValid ? "Valid" : "Invalid")} craft for {techType} with count {count}. \n\nEntry cost: \n{entryCost}");
+            return isValid;
         }
 
         public static void CostOfCraft(Stack<Resource> craftStack, out ResourceTable entryCost)
         {
-            entryCost = new();
+            entryCost = [];
             foreach (Resource resource in craftStack)
             {
                 int materialCount = resource.Amount;
@@ -39,7 +41,7 @@ namespace ChainCrafting.CraftingLogic
 
         public static void CostOfOwned(Resource target, out ResourceTable savedCost)
         {
-            savedCost = new();
+            savedCost = [];
             Logic.OrganisedStack(target, out Stack<Resource> baseStack);
             Logic.ChainCraft(target, out Stack<Resource> craftStack);
             Logic.AccountForYields(ref baseStack);
