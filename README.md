@@ -18,6 +18,8 @@ The recipe will craft regardless of the type of crafter (ie. upgrade station wil
 # **Requirements**
 Nautilus is required to run this mod
 
+# **Mod testers**
+Thank you so much to Naka (Discord) for constantly helping out with testing the mod
 
 # **Shout outs**
 Thank you @EldritchCarMaker (Discord) for all of the technical help\
