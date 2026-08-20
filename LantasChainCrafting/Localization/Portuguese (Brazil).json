@@ -1,0 +1,33 @@
+{
+  "ActionRawResources_Bind": "Alterar visão de recursos base",
+  "ActionCraftingHelper_Bind": "Abrir Ajudante de Fabricação",
+  "ActionChangeCraft_Bind": "Alterar quantia de fabricação",
+
+
+  "OptionRawResources_Bind": "Recursos Base",
+  "OptionDesc_RawResources_Bind": "Altera a visão de recursos para ver os recursos primários",
+
+  "OptionCraftingHelper_Bind": "Ajudante de Fabricação",
+  "OptionDesc_CraftingHelper_Bind": "Abre o menu do Ajudante de Fabricação no seu PDA",
+
+  "OptionUpCraft_Bind": "Aumentar Fabricação",
+  "OptionDesc_UpCraft_Bind": "Aumenta a quantia de items fabricados",
+
+  "OptionDownCraft_Bind": "Diminuir Fabricação",
+  "OptionDesc_DownCraft_Bind": "Diminui a quantia de items fabricados",
+
+  "TabCraftingHelper": "Ajudante de Fabricação",
+
+  "ConfigTab": "Opçoes Encadeadas",
+
+  "ConfigOnHold": "Segurar botão Recursos Base",
+  "ConfigOnHoldDesc": "Se o botão de \"Recursos Base\" deve ser segurado ou apertado",
+  "ConfigBulkCraft": "Quantia Bulk Craft",
+  "ConfigBulkCraftDesc": "Quantidade máxima de items para fabricar usando função BulkCraft",
+  "ConfigLockerRange": "Distancia máxima",
+  "ConfigLockerRangeDesc": "Distância máxima do jogador para fabricar",
+
+  "CraftStop": "Parar fabricação",
+
+  "NotEnoughPowerMessage": "Sem energia o suficiente para fabricar"
+}
